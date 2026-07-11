@@ -1,0 +1,462 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SonicWall CLI Command Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#150e08;
+    --bg-raised:#211609;
+    --panel:#1b1207;
+    --border:#40290f;
+    --border-soft:#2e1d0c;
+    --text:#e9f0f8;
+    --text-dim:#95a8bd;
+    --text-faint:#607086;
+    --signal:#ff8a3d;
+    --signal-rgb:255,138,61;
+    --d1:#ff8a3d;
+    --d2:#c7e35f;
+    --d3:#63d5b0;
+    --d4:#76b6ff;
+    --mono:'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius:10px;
+    --ease:cubic-bezier(.4,0,.2,1);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{margin:0;padding:0;}
+  ::selection{background:rgba(var(--signal-rgb),.32);color:#fff;}
+
+  body{
+    background:
+      radial-gradient(ellipse 1000px 520px at 12% -12%, rgba(var(--signal-rgb),0.10), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 100% 0%, rgba(var(--signal-rgb),0.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    line-height:1.5;
+  }
+
+  a{color:var(--signal);}
+
+  /* focus accessibility */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, .chip:focus-visible{
+    outline:2px solid var(--signal);
+    outline-offset:2px;
+    border-radius:4px;
+  }
+
+  /* ---------- Title bar ---------- */
+  .titlebar{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 22px;
+    background:rgba(10,14,20,0.72);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:30;
+  }
+  .dots{display:flex;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;opacity:.9;}
+  .dot.r{background:#e0665a;}.dot.y{background:#e4b45a;}.dot.g{background:#5ec78b;}
+  .titlebar .path{font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-left:6px;letter-spacing:.01em;}
+  .titlebar .path b{color:var(--signal);font-weight:500;}
+  .menu-btn{
+    margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--text);text-decoration:none;
+    border:1px solid var(--border);background:var(--panel);padding:6px 12px;border-radius:7px;
+    transition:border-color .18s var(--ease), background .18s var(--ease), transform .18s var(--ease), color .18s var(--ease);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .menu-btn::before{content:"←";opacity:.6;transition:transform .18s var(--ease);}
+  .menu-btn:hover{border-color:var(--signal);color:var(--signal);background:var(--bg-raised);}
+  .menu-btn:hover::before{transform:translateX(-2px);}
+
+  /* ---------- Hero ---------- */
+  header.hero{max-width:1720px;margin:0 auto;padding:40px 24px 20px;}
+  .eyebrow{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--signal);
+    text-transform:uppercase;margin:0 0 12px;display:flex;align-items:center;gap:8px;font-weight:600;
+  }
+  .eyebrow::before{content:"";width:7px;height:7px;background:var(--signal);border-radius:50%;box-shadow:0 0 10px 1px rgba(var(--signal-rgb),.8);}
+  h1{font-weight:700;font-size:clamp(26px,3.6vw,38px);margin:0 0 10px;letter-spacing:-0.015em;line-height:1.15;}
+  header.hero p.sub{color:var(--text-dim);font-size:15px;max-width:820px;line-height:1.6;margin:0;}
+
+  /* ---------- Controls ---------- */
+  .controls{
+    max-width:1720px;margin:0 auto;padding:0 24px 16px;
+    position:sticky;top:45px;z-index:20;
+    background:linear-gradient(var(--bg) 78%, transparent);
+    padding-top:6px;
+  }
+  .search-wrap{
+    display:flex;align-items:center;background:var(--panel);border:1px solid var(--border);
+    border-radius:var(--radius);padding:0 8px 0 16px;font-family:var(--mono);
+    transition:border-color .18s var(--ease), box-shadow .18s var(--ease);
+  }
+  .search-wrap:focus-within{border-color:var(--signal);box-shadow:0 0 0 3px rgba(var(--signal-rgb),0.15);}
+  .prompt{color:var(--signal);font-weight:600;font-size:14px;white-space:nowrap;}
+  #search{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:14px;padding:13px 10px;}
+  #search::placeholder{color:var(--text-faint);}
+  kbd{font-family:var(--mono);font-size:11px;color:var(--text-dim);border:1px solid var(--border-soft);background:var(--bg-raised);border-radius:5px;padding:3px 7px;margin-left:auto;}
+
+  .filters-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;}
+  .chip{
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:6.5px 14px;cursor:pointer;
+    display:flex;align-items:center;gap:7px;user-select:none;
+    transition:border-color .16s var(--ease), color .16s var(--ease), background .16s var(--ease), transform .12s var(--ease);
+  }
+  .chip:hover{border-color:var(--border-soft);color:var(--text);transform:translateY(-1px);}
+  .chip:active{transform:translateY(0);}
+  .chip .swatch{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .chip.active{color:var(--bg);background:var(--chip-color,var(--signal));border-color:var(--chip-color,var(--signal));font-weight:600;}
+  .reset-chip{margin-left:auto;}
+
+  select#category{
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:6.5px 30px 6.5px 14px;cursor:pointer;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0 L5 6 L10 0 Z' fill='%2395a8bd'/></svg>");
+    background-repeat:no-repeat;background-position:right 13px center;
+    transition:border-color .16s var(--ease);
+  }
+  select#category:hover{border-color:var(--border-soft);}
+  .count-line{font-family:var(--mono);font-size:12px;color:var(--text-faint);margin-left:4px;}
+
+  /* ---------- Table ---------- */
+  main{max-width:1720px;margin:0 auto;padding:6px 24px 54px;}
+  .table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--panel);}
+  .table-wrap > table{display:block;overflow:auto;max-height:none;}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  thead th{
+    text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--text-dim);font-weight:600;background:var(--bg-raised);padding:12px 16px;
+    border-bottom:1px solid var(--border);position:sticky;top:0;
+  }
+  tbody tr{border-bottom:1px solid var(--border-soft);transition:background .12s var(--ease);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:rgba(var(--signal-rgb),0.055);}
+  td{padding:13px 16px;vertical-align:top;font-size:13px;line-height:1.55;}
+  td.device{white-space:nowrap;border-left:3px solid var(--tag-color);}
+  .tag{
+    font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.02em;color:var(--tag-color);
+    background:color-mix(in srgb, var(--tag-color) 14%, transparent);
+    border:1px solid color-mix(in srgb, var(--tag-color) 38%, transparent);
+    padding:3.5px 9px;border-radius:5px;white-space:nowrap;display:inline-block;
+  }
+  td.category{color:var(--text-dim);font-size:13px;white-space:nowrap;}
+  td.mode{color:var(--text-faint);font-size:11.5px;font-family:var(--mono);white-space:nowrap;text-transform:uppercase;letter-spacing:.03em;}
+  td.command{font-family:var(--mono);white-space:normal;overflow-wrap:anywhere;}
+  td.desc{color:#eef4fb;white-space:normal;overflow-wrap:anywhere;}
+  td.example{font-family:var(--mono);color:var(--text-dim);font-size:12px;white-space:normal;overflow-wrap:anywhere;}
+  mark{background:rgba(var(--signal-rgb),.32);color:#fff;border-radius:2px;padding:0 1px;}
+  .cmd-btn{
+    background:none;border:none;padding:2px 0;color:var(--signal);font-family:var(--mono);font-size:13px;
+    cursor:pointer;text-align:left;display:inline-flex;align-items:center;gap:8px;border-radius:4px;
+  }
+  .cmd-btn:hover{text-decoration:underline;}
+  .copy-icon{opacity:.45;font-size:11px;transition:opacity .16s var(--ease);}
+  .cmd-btn:hover .copy-icon{opacity:.9;}
+
+  .empty{text-align:center;padding:70px 20px;color:var(--text-dim);font-family:var(--mono);font-size:13px;}
+
+  /* ---------- Examples ---------- */
+  .examples{max-width:1720px;margin:26px auto 10px;padding:0 24px;}
+  .examples h2{margin:0 0 8px;font-size:19px;letter-spacing:-0.01em;}
+  .examples p{margin:0 0 16px;color:var(--text-dim);font-size:14px;}
+  .example-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;}
+  .example-card{
+    border:1px solid var(--border);background:var(--panel);border-radius:var(--radius);padding:14px 16px;
+    transition:border-color .18s var(--ease), transform .18s var(--ease);
+  }
+  .example-card:hover{border-color:var(--border-soft);transform:translateY(-2px);}
+  .example-card h3{margin:0 0 10px;font-size:12.5px;font-family:var(--mono);color:var(--signal);letter-spacing:.02em;text-transform:uppercase;}
+  .example-card pre{margin:0;white-space:pre-wrap;font-family:var(--mono);font-size:12px;color:var(--text-dim);line-height:1.55;}
+
+  /* ---------- Toast & footer ---------- */
+  .toast{
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(14px);
+    background:var(--signal);color:#0a0e14;font-family:var(--mono);font-weight:700;font-size:13px;
+    padding:11px 20px;border-radius:9px;opacity:0;pointer-events:none;
+    transition:opacity .2s var(--ease), transform .2s var(--ease);z-index:50;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  footer{text-align:center;color:var(--text-faint);font-family:var(--mono);font-size:11.5px;padding:20px 24px 40px;border-top:1px solid var(--border-soft);margin-top:10px;max-width:1720px;margin-left:auto;margin-right:auto;}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none!important;}
+  }
+
+  @media (max-width:900px){
+    .controls{position:static;}
+    thead{display:none;}
+    table,tbody,tr,td{display:block;width:100%;}
+    tbody tr{padding:14px 16px 16px;position:relative;}
+    td{padding:3px 0;border:none!important;}
+    td.device{border-left:none;padding-bottom:8px;}
+    td.category, td.mode{display:inline-block;margin-right:10px;}
+    td.command{margin:6px 0 4px;}
+    td.example{margin-top:6px;padding:9px 11px;background:var(--bg-raised);border-radius:7px;}
+  }
+
+  @media (max-width:560px){
+    header.hero{padding:28px 16px 16px;}
+    .controls{padding:0 16px 14px;}
+    main{padding:6px 16px 40px;}
+    .examples{padding:0 16px;}
+    .filters-row{gap:6px;}
+    .reset-chip{margin-left:0;}
+  }
+
+</style>
+</head>
+<body>
+<div class="titlebar">
+  <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+  <span class="path">admin@sonicwall-edge:<b>~/cli-reference</b>$</span>
+  <a class="menu-btn" href="index.html">Back to Menu</a>
+</div>
+
+<header class="hero">
+  <p class="eyebrow">SonicWall Reference</p>
+  <h1>SonicWall CLI Command Reference</h1>
+  <p class="sub">Searchable command reference for NSa and NSsp firewalls, SMA remote access, and Capture Security Center operations with advanced and troubleshooting workflows.</p>
+</header>
+
+<div class="controls">
+  <div class="search-wrap"><span class="prompt">&gt;</span><input id="search" type="text" placeholder="search commands, descriptions, categories..." autocomplete="off" spellcheck="false"><kbd>/</kbd></div>
+  <div class="filters-row" id="deviceFilters">
+    <select id="category"><option value="">All categories</option></select>
+    <span class="count-line" id="countLine"></span>
+    <button class="chip reset-chip" id="resetFilters" type="button">Show All</button>
+  </div>
+</div>
+
+<main>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:12%">Device</th>
+          <th style="width:10%">Category</th>
+          <th style="width:9%">Mode</th>
+          <th style="width:20%">Command</th>
+          <th style="width:31%">Description</th>
+          <th style="width:18%">Example</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="emptyState" style="display:none;">No commands match your search.</div>
+  </div>
+</main>
+
+<section class="examples">
+  <h2>Configuration and Output Examples</h2>
+  <p>Operational snippets for baseline validation and fault isolation.</p>
+  <div class="example-grid">
+    <article class="example-card"><h3>Access Rule Example</h3><pre>config
+ access-rules
+  ipv4
+   from LAN to WAN action allow service HTTPS source any destination any
+ commit</pre></article>
+    <article class="example-card"><h3>Troubleshooting Output</h3><pre>&gt; show interface status
+X0 up  1000/full  WAN
+X1 up  1000/full  LAN
+
+&gt; show vpn ike sa</pre></article>
+  </div>
+</section>
+
+<footer>SonicWall CLI Command Reference · offline static page · Copyright Artan V.</footer>
+<div class="toast" id="toast">Copied</div>
+
+<script>
+const DATA = [
+  {device:"NSa / TZ Firewall",category:"System",mode:"CLI",command:"show version",description:"Displays firmware and appliance details.",example:"show version"},
+  {device:"NSa / TZ Firewall",category:"Interfaces",mode:"CLI",command:"show interface status",description:"Shows operational state and speed for all interfaces.",example:"show interface status"},
+  {device:"NSa / TZ Firewall",category:"Access Rules",mode:"Config",command:"access-rules ipv4 from LAN to WAN action allow service HTTPS source any destination any",description:"Creates an IPv4 LAN to WAN HTTPS allow rule.",example:"access-rules ipv4 from LAN to WAN action allow service HTTPS source any destination any"},
+  {device:"NSsp / High End",category:"Routing",mode:"Config",command:"route-policy add destination 0.0.0.0/0 gateway 203.0.113.1 interface X0",description:"Adds default route with explicit gateway and egress interface.",example:"route-policy add destination 0.0.0.0/0 gateway 203.0.113.1 interface X0"},
+  {device:"SMA / Remote Access",category:"Remote Access",mode:"Config",command:"show netextender users",description:"Lists current NetExtender user sessions.",example:"show netextender users"},
+  {device:"Capture Security Center",category:"Operations",mode:"CLI",command:"show analytics threat-summary",description:"Displays top detected threat categories and counts.",example:"show analytics threat-summary"},
+
+  {device:"NSa / TZ Firewall",category:"Advanced",mode:"Config",command:"dpi-ssl client-inspection enable",description:"Enables DPI SSL client inspection for outbound traffic.",example:"dpi-ssl client-inspection enable"},
+  {device:"NSsp / High End",category:"Advanced",mode:"Config",command:"high-availability stateful-synchronization enable",description:"Enables state synchronization between HA peers.",example:"high-availability stateful-synchronization enable"},
+  {device:"SMA / Remote Access",category:"Advanced",mode:"Config",command:"tunnel-all-mode enable",description:"Forces full-tunnel mode for remote access sessions.",example:"tunnel-all-mode enable"},
+
+  {device:"NSa / TZ Firewall",category:"Troubleshooting",mode:"CLI",command:"show conntrack summary",description:"Shows active connection tracking table statistics.",example:"show conntrack summary"},
+  {device:"NSa / TZ Firewall",category:"Troubleshooting",mode:"CLI",command:"packet-monitor enable filter source 10.1.10.20 destination 8.8.8.8",description:"Starts targeted packet monitor for flow troubleshooting.",example:"packet-monitor enable filter source 10.1.10.20 destination 8.8.8.8"},
+  {device:"NSsp / High End",category:"Troubleshooting",mode:"CLI",command:"show high-availability status",description:"Checks active and standby HA node status.",example:"show high-availability status"},
+  {device:"SMA / Remote Access",category:"Troubleshooting",mode:"CLI",command:"show sslvpn session details",description:"Displays detailed SSL VPN session information.",example:"show sslvpn session details"},
+  {device:"Capture Security Center",category:"Troubleshooting",mode:"CLI",command:"show logs security last 100",description:"Retrieves recent security events for rapid triage.",example:"show logs security last 100"}
+];
+
+const EXTRA_COMMANDS = [
+  {device:"NSa / TZ Firewall",category:"System",mode:"CLI",command:"show uptime",description:"Displays system uptime and reboot history.",example:"show uptime"},
+  {device:"NSa / TZ Firewall",category:"Interfaces",mode:"CLI",command:"show interface X0",description:"Shows detailed operational status of interface X0.",example:"show interface X0"},
+  {device:"NSa / TZ Firewall",category:"Interfaces",mode:"Config",command:"interface X1 ip-assignment static 10.1.10.1 255.255.255.0",description:"Assigns static IP to LAN interface.",example:"interface X1 ip-assignment static 10.1.10.1 255.255.255.0"},
+  {device:"NSa / TZ Firewall",category:"NAT",mode:"Config",command:"nat-policy add original-source any translated-source interface-ip original-destination any service any inbound-interface X1 outbound-interface X0",description:"Creates outbound source NAT policy.",example:"nat-policy add original-source any translated-source interface-ip original-destination any service any inbound-interface X1 outbound-interface X0"},
+  {device:"NSa / TZ Firewall",category:"VPN",mode:"Config",command:"vpn policy add name BRANCH-01 gateway 198.51.100.10 ikev2 enable",description:"Creates site-to-site VPN profile.",example:"vpn policy add name BRANCH-01 gateway 198.51.100.10 ikev2 enable"},
+  {device:"NSa / TZ Firewall",category:"VPN",mode:"CLI",command:"show vpn policy",description:"Lists configured VPN policies.",example:"show vpn policy"},
+  {device:"NSa / TZ Firewall",category:"Security Services",mode:"Config",command:"gateway-antivirus enable",description:"Enables gateway anti-virus scanning.",example:"gateway-antivirus enable"},
+  {device:"NSa / TZ Firewall",category:"Security Services",mode:"Config",command:"intrusion-prevention enable",description:"Enables IPS engine globally.",example:"intrusion-prevention enable"},
+  {device:"NSa / TZ Firewall",category:"Routing",mode:"Config",command:"route-policy add destination 10.20.0.0/16 gateway 10.1.10.254 interface X1",description:"Adds static route for internal network.",example:"route-policy add destination 10.20.0.0/16 gateway 10.1.10.254 interface X1"},
+
+  {device:"NSsp / High End",category:"System",mode:"CLI",command:"show chassis status",description:"Displays hardware health and environmental sensors.",example:"show chassis status"},
+  {device:"NSsp / High End",category:"HA",mode:"Config",command:"high-availability enable",description:"Enables HA pair functionality.",example:"high-availability enable"},
+  {device:"NSsp / High End",category:"HA",mode:"CLI",command:"show high-availability synchronization",description:"Shows HA synchronization state.",example:"show high-availability synchronization"},
+  {device:"NSsp / High End",category:"Routing",mode:"Config",command:"ospf enable area 0 interface X2",description:"Enables OSPF on chosen interface.",example:"ospf enable area 0 interface X2"},
+  {device:"NSsp / High End",category:"Routing",mode:"CLI",command:"show ospf neighbor",description:"Displays OSPF adjacency status.",example:"show ospf neighbor"},
+
+  {device:"SMA / Remote Access",category:"Remote Access",mode:"Config",command:"realm add name Employees authentication local",description:"Creates remote access realm for users.",example:"realm add name Employees authentication local"},
+  {device:"SMA / Remote Access",category:"Remote Access",mode:"Config",command:"bookmark add realm Employees type web url https://intranet.local",description:"Adds web bookmark to access realm.",example:"bookmark add realm Employees type web url https://intranet.local"},
+  {device:"SMA / Remote Access",category:"Remote Access",mode:"CLI",command:"show connected-users",description:"Shows active SMA user sessions.",example:"show connected-users"},
+
+  {device:"Capture Security Center",category:"Operations",mode:"CLI",command:"show alert severity critical",description:"Filters critical alerts for SOC review.",example:"show alert severity critical"},
+  {device:"Capture Security Center",category:"Operations",mode:"CLI",command:"show endpoint posture summary",description:"Summarizes endpoint security posture status.",example:"show endpoint posture summary"},
+
+  {device:"NSa / TZ Firewall",category:"Advanced",mode:"Config",command:"dpi-ssl server-inspection enable",description:"Enables DPI SSL for inbound encrypted traffic.",example:"dpi-ssl server-inspection enable"},
+  {device:"NSa / TZ Firewall",category:"Advanced",mode:"Config",command:"botnet-filtering mode strict",description:"Sets botnet filtering enforcement mode.",example:"botnet-filtering mode strict"},
+  {device:"NSsp / High End",category:"Advanced",mode:"Config",command:"flow-reporting netflow-export enable",description:"Enables NetFlow/IPFIX export for analytics.",example:"flow-reporting netflow-export enable"},
+  {device:"SMA / Remote Access",category:"Advanced",mode:"Config",command:"device-control enforce-managed-only",description:"Restricts VPN access to managed devices.",example:"device-control enforce-managed-only"},
+
+  {device:"NSa / TZ Firewall",category:"Troubleshooting",mode:"CLI",command:"show cpu utilization",description:"Checks current CPU load for performance issues.",example:"show cpu utilization"},
+  {device:"NSa / TZ Firewall",category:"Troubleshooting",mode:"CLI",command:"show memory utilization",description:"Checks memory pressure and allocation.",example:"show memory utilization"},
+  {device:"NSa / TZ Firewall",category:"Troubleshooting",mode:"CLI",command:"packet-monitor status",description:"Displays packet monitor runtime status.",example:"packet-monitor status"},
+  {device:"NSsp / High End",category:"Troubleshooting",mode:"CLI",command:"show diagnostics hardware",description:"Runs hardware diagnostics summary.",example:"show diagnostics hardware"},
+  {device:"SMA / Remote Access",category:"Troubleshooting",mode:"CLI",command:"show auth-failures last 50",description:"Shows recent authentication failures.",example:"show auth-failures last 50"},
+  {device:"Capture Security Center",category:"Troubleshooting",mode:"CLI",command:"show connector status",description:"Verifies cloud connector health and telemetry flow.",example:"show connector status"}
+];
+DATA.push(...EXTRA_COMMANDS);
+
+const BULK_PACK = [];
+
+["X0","X1","X2","X3","X4","X5","X6","X7","X8","X9","U0","U1"].forEach(ifn => {
+  BULK_PACK.push({device:"NSa / TZ Firewall",category:"Interfaces",mode:"CLI",command:`show interface ${ifn} statistics`,description:"Shows packet/error counters for specific interface.",example:`show interface ${ifn} statistics`});
+});
+
+["10.1.10.0/24","10.2.20.0/24","10.3.30.0/24","10.4.40.0/24","172.16.10.0/24","172.16.20.0/24","192.168.10.0/24","192.168.20.0/24"].forEach(net => {
+  BULK_PACK.push({device:"NSa / TZ Firewall",category:"Routing",mode:"CLI",command:`show route destination ${net}`,description:"Validates route for destination network.",example:`show route destination ${net}`});
+});
+
+["High","Medium","Low","Critical","Informational","Alert","Notice","Error","Debug","Emergency"].forEach(level => {
+  BULK_PACK.push({device:"Capture Security Center",category:"Operations",mode:"CLI",command:`show logs severity ${level} last 200`,description:"Retrieves log subset by severity class.",example:`show logs severity ${level} last 200`});
+});
+
+["Employees","Contractors","Partners","Admins","NOC","SOC","DevOps","Finance","Sales","Support"].forEach(realm => {
+  BULK_PACK.push({device:"SMA / Remote Access",category:"Remote Access",mode:"CLI",command:`show realm ${realm} policy`,description:"Displays remote access policy for specific realm.",example:`show realm ${realm} policy`});
+});
+
+["dpi-ssl","ips","gateway-antivirus","anti-spyware","capture-atp","botnet-filtering","geo-ip-filter","app-control","content-filter","bandwidth-management"].forEach(feature => {
+  BULK_PACK.push({device:"NSsp / High End",category:"Advanced",mode:"CLI",command:`show security-feature ${feature} status`,description:"Checks runtime status of advanced security feature.",example:`show security-feature ${feature} status`});
+});
+
+DATA.push(...BULK_PACK);
+
+const DEVICE_COLORS = {
+  "NSa / TZ Firewall":"var(--d1)",
+  "NSsp / High End":"var(--d2)",
+  "SMA / Remote Access":"var(--d3)",
+  "Capture Security Center":"var(--d4)"
+};
+
+const rowsEl = document.getElementById('rows');
+const searchEl = document.getElementById('search');
+const emptyState = document.getElementById('emptyState');
+const countLine = document.getElementById('countLine');
+const categorySelect = document.getElementById('category');
+const deviceFilters = document.getElementById('deviceFilters');
+const resetFiltersBtn = document.getElementById('resetFilters');
+
+let activeDevices = new Set();
+let activeCategory = "";
+
+const devices = [...new Set(DATA.map(d => d.device))];
+devices.forEach(dev => {
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.dataset.device = dev;
+  chip.innerHTML = `<span class="swatch" style="color:${DEVICE_COLORS[dev]}"></span>${dev}`;
+  chip.addEventListener('click', () => {
+    if (activeDevices.has(dev)) activeDevices.delete(dev); else activeDevices.add(dev);
+    chip.classList.toggle('active');
+    render();
+  });
+  deviceFilters.insertBefore(chip, categorySelect);
+});
+
+[...new Set(DATA.map(d => d.category))].sort().forEach(cat => {
+  const opt = document.createElement('option');
+  opt.value = cat;
+  opt.textContent = cat;
+  categorySelect.appendChild(opt);
+});
+
+categorySelect.addEventListener('change', () => { activeCategory = categorySelect.value; render(); });
+resetFiltersBtn.addEventListener('click', () => {
+  searchEl.value = '';
+  activeDevices.clear();
+  activeCategory = '';
+  categorySelect.value = '';
+  deviceFilters.querySelectorAll('.chip[data-device]').forEach(chip => chip.classList.remove('active'));
+  render();
+});
+
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function highlight(text,q){if(!q)return escapeHtml(text);const i=text.toLowerCase().indexOf(q.toLowerCase());if(i===-1)return escapeHtml(text);return escapeHtml(text.slice(0,i))+'<mark>'+escapeHtml(text.slice(i,i+q.length))+'</mark>'+escapeHtml(text.slice(i+q.length));}
+
+function render(){
+  const q = searchEl.value.trim().toLowerCase();
+  const filtered = DATA.filter(d => {
+    if (activeDevices.size && !activeDevices.has(d.device)) return false;
+    if (activeCategory && d.category !== activeCategory) return false;
+    if (!q) return true;
+    return (d.device+' '+d.category+' '+d.mode+' '+d.command+' '+d.description+' '+d.example).toLowerCase().includes(q);
+  });
+
+  rowsEl.innerHTML = filtered.map(d => `
+    <tr>
+      <td class="device" style="--tag-color:${DEVICE_COLORS[d.device]}"><span class="tag" style="--tag-color:${DEVICE_COLORS[d.device]}">${d.device}</span></td>
+      <td class="category">${highlight(d.category,q)}</td>
+      <td class="mode">${escapeHtml(d.mode)}</td>
+      <td class="command"><button class="cmd-btn" onclick="copyCmd(this)" data-cmd="${escapeHtml(d.command)}">${highlight(d.command,q)}<span class="copy-icon">[]</span></button></td>
+      <td class="desc">${highlight(d.description,q)}</td>
+      <td class="example">${highlight(d.example,q)}</td>
+    </tr>`).join('');
+
+  emptyState.style.display = filtered.length ? 'none' : 'block';
+  countLine.innerHTML = `<b>${filtered.length}</b> / ${DATA.length} commands`;
+}
+
+function copyCmd(btn){
+  const cmd = btn.getAttribute('data-cmd');
+  navigator.clipboard.writeText(cmd).then(() => {
+    const toast = document.getElementById('toast');
+    toast.textContent = `Copied: ${cmd}`;
+    toast.classList.add('show');
+    clearTimeout(window._t);
+    window._t = setTimeout(() => toast.classList.remove('show'), 1600);
+  });
+}
+
+searchEl.addEventListener('input', render);
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && document.activeElement !== searchEl) { e.preventDefault(); searchEl.focus(); }
+  if (e.key === 'Escape') { searchEl.value = ''; render(); }
+});
+render();
+</script>
+</body>
+</html>

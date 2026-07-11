@@ -1,0 +1,426 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arista EOS CLI Command Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1220;
+    --bg-raised:#111d30;
+    --panel:#0f1a2b;
+    --border:#233450;
+    --border-soft:#1a2740;
+    --text:#e9f0f8;
+    --text-dim:#95a8bd;
+    --text-faint:#607086;
+    --signal:#f5a742;
+    --signal-rgb:245,167,66;
+    --d1:#5b9dd9;
+    --d2:#6fc98a;
+    --d3:#e0648a;
+    --d4:#c589e8;
+    --mono:'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius:10px;
+    --ease:cubic-bezier(.4,0,.2,1);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{margin:0;padding:0;}
+  ::selection{background:rgba(var(--signal-rgb),.32);color:#fff;}
+
+  body{
+    background:
+      radial-gradient(ellipse 1000px 520px at 12% -12%, rgba(var(--signal-rgb),0.10), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 100% 0%, rgba(var(--signal-rgb),0.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    line-height:1.5;
+  }
+
+  a{color:var(--signal);}
+
+  /* focus accessibility */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, .chip:focus-visible{
+    outline:2px solid var(--signal);
+    outline-offset:2px;
+    border-radius:4px;
+  }
+
+  /* ---------- Title bar ---------- */
+  .titlebar{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 22px;
+    background:rgba(10,14,20,0.72);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:30;
+  }
+  .dots{display:flex;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;opacity:.9;}
+  .dot.r{background:#e0665a;}.dot.y{background:#e4b45a;}.dot.g{background:#5ec78b;}
+  .titlebar .path{font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-left:6px;letter-spacing:.01em;}
+  .titlebar .path b{color:var(--signal);font-weight:500;}
+  .menu-btn{
+    margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--text);text-decoration:none;
+    border:1px solid var(--border);background:var(--panel);padding:6px 12px;border-radius:7px;
+    transition:border-color .18s var(--ease), background .18s var(--ease), transform .18s var(--ease), color .18s var(--ease);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .menu-btn::before{content:"←";opacity:.6;transition:transform .18s var(--ease);}
+  .menu-btn:hover{border-color:var(--signal);color:var(--signal);background:var(--bg-raised);}
+  .menu-btn:hover::before{transform:translateX(-2px);}
+
+  /* ---------- Hero ---------- */
+  header.hero{max-width:1720px;margin:0 auto;padding:40px 24px 20px;}
+  .eyebrow{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--signal);
+    text-transform:uppercase;margin:0 0 12px;display:flex;align-items:center;gap:8px;font-weight:600;
+  }
+  .eyebrow::before{content:"";width:7px;height:7px;background:var(--signal);border-radius:50%;box-shadow:0 0 10px 1px rgba(var(--signal-rgb),.8);}
+  h1{font-weight:700;font-size:clamp(26px,3.6vw,38px);margin:0 0 10px;letter-spacing:-0.015em;line-height:1.15;}
+  header.hero p.sub{color:var(--text-dim);font-size:15px;max-width:820px;line-height:1.6;margin:0;}
+
+  /* ---------- Controls ---------- */
+  .controls{
+    max-width:1720px;margin:0 auto;padding:0 24px 16px;
+    position:sticky;top:45px;z-index:20;
+    background:linear-gradient(var(--bg) 78%, transparent);
+    padding-top:6px;
+  }
+  .search-wrap{
+    display:flex;align-items:center;background:var(--panel);border:1px solid var(--border);
+    border-radius:var(--radius);padding:0 8px 0 16px;font-family:var(--mono);
+    transition:border-color .18s var(--ease), box-shadow .18s var(--ease);
+  }
+  .search-wrap:focus-within{border-color:var(--signal);box-shadow:0 0 0 3px rgba(var(--signal-rgb),0.15);}
+  .prompt{color:var(--signal);font-weight:600;font-size:14px;white-space:nowrap;}
+  #search{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:14px;padding:13px 10px;}
+  #search::placeholder{color:var(--text-faint);}
+  kbd{font-family:var(--mono);font-size:11px;color:var(--text-dim);border:1px solid var(--border-soft);background:var(--bg-raised);border-radius:5px;padding:3px 7px;margin-left:auto;}
+
+  .filters-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;}
+  .chip{
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:6.5px 14px;cursor:pointer;
+    display:flex;align-items:center;gap:7px;user-select:none;
+    transition:border-color .16s var(--ease), color .16s var(--ease), background .16s var(--ease), transform .12s var(--ease);
+  }
+  .chip:hover{border-color:var(--border-soft);color:var(--text);transform:translateY(-1px);}
+  .chip:active{transform:translateY(0);}
+  .chip .swatch{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .chip.active{color:var(--bg);background:var(--chip-color,var(--signal));border-color:var(--chip-color,var(--signal));font-weight:600;}
+  .reset-chip{margin-left:auto;}
+
+  select#category{
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:6.5px 30px 6.5px 14px;cursor:pointer;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0 L5 6 L10 0 Z' fill='%2395a8bd'/></svg>");
+    background-repeat:no-repeat;background-position:right 13px center;
+    transition:border-color .16s var(--ease);
+  }
+  select#category:hover{border-color:var(--border-soft);}
+  .count-line{font-family:var(--mono);font-size:12px;color:var(--text-faint);margin-left:4px;}
+
+  /* ---------- Table ---------- */
+  main{max-width:1720px;margin:0 auto;padding:6px 24px 54px;}
+  .table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--panel);}
+  .table-wrap > table{display:block;overflow:auto;max-height:none;}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  thead th{
+    text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--text-dim);font-weight:600;background:var(--bg-raised);padding:12px 16px;
+    border-bottom:1px solid var(--border);position:sticky;top:0;
+  }
+  tbody tr{border-bottom:1px solid var(--border-soft);transition:background .12s var(--ease);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:rgba(var(--signal-rgb),0.055);}
+  td{padding:13px 16px;vertical-align:top;font-size:13px;line-height:1.55;}
+  td.device{white-space:nowrap;border-left:3px solid var(--tag-color);}
+  .tag{
+    font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.02em;color:var(--tag-color);
+    background:color-mix(in srgb, var(--tag-color) 14%, transparent);
+    border:1px solid color-mix(in srgb, var(--tag-color) 38%, transparent);
+    padding:3.5px 9px;border-radius:5px;white-space:nowrap;display:inline-block;
+  }
+  td.category{color:var(--text-dim);font-size:13px;white-space:nowrap;}
+  td.mode{color:var(--text-faint);font-size:11.5px;font-family:var(--mono);white-space:nowrap;text-transform:uppercase;letter-spacing:.03em;}
+  td.command{font-family:var(--mono);white-space:normal;overflow-wrap:anywhere;}
+  td.desc{color:#eef4fb;white-space:normal;overflow-wrap:anywhere;}
+  td.example{font-family:var(--mono);color:var(--text-dim);font-size:12px;white-space:normal;overflow-wrap:anywhere;}
+  mark{background:rgba(var(--signal-rgb),.32);color:#fff;border-radius:2px;padding:0 1px;}
+  .cmd-btn{
+    background:none;border:none;padding:2px 0;color:var(--signal);font-family:var(--mono);font-size:13px;
+    cursor:pointer;text-align:left;display:inline-flex;align-items:center;gap:8px;border-radius:4px;
+  }
+  .cmd-btn:hover{text-decoration:underline;}
+  .copy-icon{opacity:.45;font-size:11px;transition:opacity .16s var(--ease);}
+  .cmd-btn:hover .copy-icon{opacity:.9;}
+
+  .empty{text-align:center;padding:70px 20px;color:var(--text-dim);font-family:var(--mono);font-size:13px;}
+
+  /* ---------- Examples ---------- */
+  .examples{max-width:1720px;margin:26px auto 10px;padding:0 24px;}
+  .examples h2{margin:0 0 8px;font-size:19px;letter-spacing:-0.01em;}
+  .examples p{margin:0 0 16px;color:var(--text-dim);font-size:14px;}
+  .example-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;}
+  .example-card{
+    border:1px solid var(--border);background:var(--panel);border-radius:var(--radius);padding:14px 16px;
+    transition:border-color .18s var(--ease), transform .18s var(--ease);
+  }
+  .example-card:hover{border-color:var(--border-soft);transform:translateY(-2px);}
+  .example-card h3{margin:0 0 10px;font-size:12.5px;font-family:var(--mono);color:var(--signal);letter-spacing:.02em;text-transform:uppercase;}
+  .example-card pre{margin:0;white-space:pre-wrap;font-family:var(--mono);font-size:12px;color:var(--text-dim);line-height:1.55;}
+
+  /* ---------- Toast & footer ---------- */
+  .toast{
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(14px);
+    background:var(--signal);color:#0a0e14;font-family:var(--mono);font-weight:700;font-size:13px;
+    padding:11px 20px;border-radius:9px;opacity:0;pointer-events:none;
+    transition:opacity .2s var(--ease), transform .2s var(--ease);z-index:50;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  footer{text-align:center;color:var(--text-faint);font-family:var(--mono);font-size:11.5px;padding:20px 24px 40px;border-top:1px solid var(--border-soft);margin-top:10px;max-width:1720px;margin-left:auto;margin-right:auto;}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none!important;}
+  }
+
+  @media (max-width:900px){
+    .controls{position:static;}
+    thead{display:none;}
+    table,tbody,tr,td{display:block;width:100%;}
+    tbody tr{padding:14px 16px 16px;position:relative;}
+    td{padding:3px 0;border:none!important;}
+    td.device{border-left:none;padding-bottom:8px;}
+    td.category, td.mode{display:inline-block;margin-right:10px;}
+    td.command{margin:6px 0 4px;}
+    td.example{margin-top:6px;padding:9px 11px;background:var(--bg-raised);border-radius:7px;}
+  }
+
+  @media (max-width:560px){
+    header.hero{padding:28px 16px 16px;}
+    .controls{padding:0 16px 14px;}
+    main{padding:6px 16px 40px;}
+    .examples{padding:0 16px;}
+    .filters-row{gap:6px;}
+    .reset-chip{margin-left:0;}
+  }
+
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+  <span class="path">admin@leaf-01:<b>~/cli-reference</b>$</span>
+  <a class="menu-btn" href="index.html">Back to Menu</a>
+</div>
+
+<header class="hero">
+  <p class="eyebrow">142 commands · 4 platforms</p>
+  <h1>Arista EOS CLI Command Reference</h1>
+  <p class="sub">A searchable field manual for Arista EOS Switch, MLAG, BGP EVPN/VXLAN, and CloudVision syntax â€” from VLANs and port-channels through anycast gateways, EVPN control-plane peering, and CVP-based provisioning and change control. Click any command to copy it.</p>
+</header>
+
+<div class="controls">
+  <div class="search-wrap">
+    <span class="prompt">&gt;</span>
+    <input id="search" type="text" placeholder="search commands, descriptions, categoriesâ€¦" autocomplete="off" spellcheck="false">
+    <kbd>/</kbd>
+  </div>
+  <div class="filters-row" id="deviceFilters">
+    <select id="category"><option value="">All categories</option></select>
+    <span class="count-line" id="countLine"></span>
+    <button class="chip reset-chip" id="resetFilters" type="button">Show All</button>
+  </div>
+</div>
+
+<main>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:12%">Device</th>
+          <th style="width:10%">Category</th>
+          <th style="width:9%">Mode</th>
+          <th style="width:20%">Command</th>
+          <th style="width:31%">Description</th>
+          <th style="width:18%">Example</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="emptyState" style="display:none;">No commands match your search â€” try a different term.</div>
+  </div>
+</main>
+
+<section class="examples">
+  <h2>Configuration and Output Examples</h2>
+  <p>Operational samples for baseline verification and post-change checks.</p>
+  <div class="example-grid">
+    <article class="example-card">
+      <h3>EVPN / VXLAN Sample</h3>
+      <pre>interface Vxlan1
+   vxlan source-interface Loopback1
+   vxlan vlan 10 vni 10010
+router bgp 65001
+   vlan 10
+      rd auto
+      route-target both auto</pre>
+    </article>
+    <article class="example-card">
+      <h3>Troubleshooting Output</h3>
+      <pre># show mlag
+MLAG Configuration: domain-id DC1-MLAG, state active
+
+# show bgp evpn summary
+Neighbor        State/PfxRcd
+10.255.0.11     245
+10.255.0.12     248</pre>
+    </article>
+  </div>
+</section>
+
+<footer>Arista EOS CLI Command Reference · offline, static, single file · Copyright Artan V.</footer>
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+const DATA = [["Switch (EOS)", "VLANs", "Global Config", "vlan [vlan-id]", "Creates a VLAN and enters VLAN config mode", "vlan 10"], ["Switch (EOS)", "VLANs", "VLAN Config", "name [vlan-name]", "Assigns a descriptive name to the current VLAN", "name SALES"], ["Switch (EOS)", "VLANs", "Interface Config", "switchport mode access", "Sets the interface as an access port", "switchport mode access"], ["Switch (EOS)", "VLANs", "Interface Config", "switchport access vlan [vlan-id]", "Assigns an access port to a specific VLAN", "switchport access vlan 10"], ["Switch (EOS)", "VLANs", "Interface Config", "switchport mode trunk", "Sets the interface as a trunk port", "switchport mode trunk"], ["Switch (EOS)", "VLANs", "Interface Config", "switchport trunk allowed vlan [vlan-list]", "Restricts which VLANs are allowed on a trunk", "switchport trunk allowed vlan 10,20,30"], ["Switch (EOS)", "VLANs", "Global Config", "vlan internal order ascending range [start] [end]", "Sets the range EOS uses to auto-assign internal VLANs", "vlan internal order ascending range 1006 1199"], ["Switch (EOS)", "Interfaces", "Interface Config", "interface Ethernet [id]", "Enters configuration mode for a physical Ethernet interface", "interface Ethernet1"], ["Switch (EOS)", "Interfaces", "Interface Config", "description [text]", "Adds a descriptive label to an interface", "description LINK-TO-SPINE1"], ["Switch (EOS)", "Interfaces", "Interface Config", "speed forced [value]", "Manually forces the interface link speed", "speed forced 10000full"], ["Switch (EOS)", "Interfaces", "Interface Config", "no switchport", "Converts a switchport to a routed Layer 3 interface", "no switchport"], ["Switch (EOS)", "Interfaces", "Privileged EXEC", "show interfaces status", "Displays link status, speed, and VLAN for all interfaces", "show interfaces status"], ["Switch (EOS)", "Interfaces", "Privileged EXEC", "show interfaces counters errors", "Displays per-interface error counters", "show interfaces counters errors"], ["Switch (EOS)", "Routed Interfaces", "Interface Config", "ip address [ip-address/prefix]", "Assigns an IP address to a routed interface or SVI", "ip address 10.1.1.1/24"], ["Switch (EOS)", "Routed Interfaces", "Global Config", "interface Vlan [vlan-id]", "Creates a switched virtual interface (SVI) for inter-VLAN routing", "interface Vlan10"], ["Switch (EOS)", "Routed Interfaces", "Global Config", "ip routing", "Enables IP routing globally on the switch", "ip routing"], ["Switch (EOS)", "First Hop Redundancy", "Interface Config", "ip virtual-router address [ip-address]", "Configures an anycast virtual gateway IP shared across VXLAN/MLAG peers", "ip virtual-router address 10.1.1.1"], ["Switch (EOS)", "First Hop Redundancy", "Global Config", "ip virtual-router mac-address [mac-address]", "Sets the shared virtual MAC address used by virtual-router gateways", "ip virtual-router mac-address 00:1c:73:00:00:99"], ["Switch (EOS)", "Spanning Tree", "Global Config", "spanning-tree mode mstp", "Sets the spanning tree protocol mode to MSTP", "spanning-tree mode mstp"], ["Switch (EOS)", "Spanning Tree", "Interface Config", "spanning-tree portfast", "Enables PortFast on an access interface", "spanning-tree portfast"], ["Switch (EOS)", "Spanning Tree", "Privileged EXEC", "show spanning-tree", "Displays spanning tree status and topology", "show spanning-tree"], ["Switch (EOS)", "Port-Channel", "Global Config", "interface Port-Channel [id]", "Creates a logical port-channel interface for link aggregation", "interface Port-Channel10"], ["Switch (EOS)", "Port-Channel", "Interface Config", "channel-group [id] mode active", "Adds an interface to a port-channel using LACP active mode", "channel-group 10 mode active"], ["Switch (EOS)", "Port-Channel", "Global Config", "port-channel load-balance [algorithm]", "Sets the hashing algorithm used to load-balance traffic across members", "port-channel load-balance src-dst-mixed-ip-port"], ["Switch (EOS)", "Port-Channel", "Privileged EXEC", "show port-channel summary", "Displays port-channel bundle status and member interfaces", "show port-channel summary"], ["Switch (EOS)", "QoS", "Interface Config", "qos trust dscp", "Configures the interface to trust incoming DSCP markings", "qos trust dscp"], ["Switch (EOS)", "QoS", "Global Config", "class-map type qos match-any [name]", "Defines a QoS traffic class for policy matching", "class-map type qos match-any VOICE"], ["Switch (EOS)", "QoS", "Global Config", "policy-map type qos [name]", "Defines a QoS policy applying actions to matched traffic classes", "policy-map type qos QOS-POLICY"], ["Switch (EOS)", "QoS", "Interface Config", "service-policy type qos input [policy-name]", "Applies a QoS policy to an interface in the inbound direction", "service-policy type qos input QOS-POLICY"], ["Switch (EOS)", "Security", "Global Config", "aaa authentication login default group tacacs+ local", "Sets the default login authentication method list using TACACS+", "aaa authentication login default group tacacs+ local"], ["Switch (EOS)", "Security", "Global Config", "tacacs-server host [ip-address] key [key]", "Defines a TACACS+ server and shared secret key", "tacacs-server host 10.1.1.90 key CorpTacKey123"], ["Switch (EOS)", "Security", "Global Config", "management api http-commands", "Enables the eAPI management interface for JSON-RPC API access", "management api http-commands"], ["Switch (EOS)", "Security", "API Config", "no shutdown", "Enables the eAPI HTTP/HTTPS listener after configuration", "no shutdown"], ["Switch (EOS)", "Access Control", "Global Config", "ip access-list [name]", "Creates a named IPv4 access control list", "ip access-list CORP-IN"], ["Switch (EOS)", "Access Control", "ACL Config", "[sequence] permit [protocol] [source] [destination]", "Adds a permit entry to a named access list", "10 permit tcp any any eq 443"], ["Switch (EOS)", "Access Control", "Interface Config", "ip access-group [acl-name] in", "Applies a named ACL inbound on an interface", "ip access-group CORP-IN in"], ["Switch (EOS)", "System", "Global Config", "hostname [name]", "Sets the switch hostname shown in the CLI prompt", "hostname LEAF-01"], ["Switch (EOS)", "System", "Global Config", "ntp server [ip-address]", "Synchronizes the switch clock with an NTP server", "ntp server 10.1.1.1"], ["Switch (EOS)", "System", "Global Config", "logging host [ip-address]", "Sends system log messages to a remote syslog server", "logging host 10.1.1.70"], ["Switch (EOS)", "System", "Global Config", "daemon TerminAttr", "Configures the TerminAttr agent that streams switch state to CloudVision", "daemon TerminAttr"], ["Switch (EOS)", "System", "Daemon Config", "exec /usr/bin/TerminAttr -cvaddr=[cvp-address]:9910 -cvauth=[method] -smashexcludes=ale,flexCounter,hardware,kni,pulse,strata -ingestexclude=/Sysdb/cell/1/agent,/Sysdb/cell/2/agent", "Sets the CloudVision server address and streaming parameters for TerminAttr", "exec /usr/bin/TerminAttr -cvaddr=10.1.1.100:9910 -cvauth=token,/tmp/token"], ["Switch (EOS)", "System", "Privileged EXEC", "bash", "Drops into the underlying Linux shell available on EOS", "bash"], ["Switch (EOS)", "Troubleshooting", "Privileged EXEC", "show version", "Displays EOS software version and hardware model information", "show version"], ["Switch (EOS)", "Troubleshooting", "Privileged EXEC", "show running-config", "Displays the active running configuration", "show running-config"], ["Switch (EOS)", "Troubleshooting", "Privileged EXEC", "show ip route", "Displays the current IP routing table", "show ip route"], ["Switch (EOS)", "Troubleshooting", "Privileged EXEC", "show mac address-table", "Displays the MAC address table learned by the switch", "show mac address-table"], ["Switch (EOS)", "Troubleshooting", "Privileged EXEC", "show lldp neighbors detail", "Displays detailed information on directly connected LLDP neighbors", "show lldp neighbors detail"], ["Switch (EOS)", "Troubleshooting", "Privileged EXEC", "show tech-support", "Generates a comprehensive diagnostic bundle for support cases", "show tech-support"], ["Switch (EOS)", "Monitoring", "Global Config", "monitor session [name] source interface [interface]", "Defines the source interface for a SPAN monitoring session", "monitor session TAP1 source interface Ethernet5"], ["Switch (EOS)", "Monitoring", "Global Config", "monitor session [name] destination interface [interface]", "Defines the destination interface for a SPAN monitoring session", "monitor session TAP1 destination interface Ethernet48"], ["Switch (EOS)", "Tap Aggregation", "Interface Config", "switchport mode tap", "Configures an interface as a tap aggregation ingress port", "switchport mode tap"], ["Switch (EOS)", "Tap Aggregation", "Interface Config", "switchport tap allowed vlan [vlan-list]", "Restricts which VLANs of tapped traffic are forwarded to tool ports", "switchport tap allowed vlan 10"], ["Switch (EOS)", "Timing", "Global Config", "ptp mode boundary", "Configures the switch as a Precision Time Protocol boundary clock", "ptp mode boundary"], ["Switch (EOS)", "Timing", "Interface Config", "ptp enable", "Enables PTP timing on a specific interface", "ptp enable"], ["Switch (EOS)", "Error Handling", "Global Config", "errdisable recovery cause [cause]", "Enables automatic recovery from an err-disabled state for a given cause", "errdisable recovery cause bpduguard"], ["Switch (EOS)", "Error Handling", "Global Config", "errdisable recovery interval [seconds]", "Sets the time before an err-disabled port automatically recovers", "errdisable recovery interval 300"], ["MLAG", "MLAG Core", "Global Config", "mlag configuration", "Enters MLAG (Multi-Chassis Link Aggregation) configuration mode", "mlag configuration"], ["MLAG", "MLAG Core", "MLAG Config", "domain-id [name]", "Sets the MLAG domain identifier shared by both peer switches", "domain-id MLAG-DOMAIN-1"], ["MLAG", "MLAG Core", "MLAG Config", "local-interface Vlan [vlan-id]", "Sets the local SVI used for MLAG peer keepalive heartbeat traffic", "local-interface Vlan4094"], ["MLAG", "MLAG Core", "MLAG Config", "peer-address [ip-address]", "Sets the IP address of the MLAG peer switch for keepalive messages", "peer-address 10.255.255.2"], ["MLAG", "MLAG Core", "MLAG Config", "peer-link [interface]", "Sets the physical port-channel used as the MLAG peer link", "peer-link Port-Channel10"], ["MLAG", "MLAG Core", "MLAG Config", "reload-delay mlag [seconds]", "Sets how long the switch waits for MLAG peer state to sync after reload", "reload-delay mlag 300"], ["MLAG", "MLAG Interfaces", "Interface Config", "mlag [id]", "Assigns an MLAG ID to a port-channel to associate it across both peers", "mlag 10"], ["MLAG", "MLAG Interfaces", "Global Config", "interface Port-Channel [id]", "Creates the local port-channel that will be paired via MLAG", "interface Port-Channel20"], ["MLAG", "Troubleshooting", "Privileged EXEC", "show mlag", "Displays overall MLAG domain status and peer connectivity", "show mlag"], ["MLAG", "Troubleshooting", "Privileged EXEC", "show mlag detail", "Displays detailed MLAG negotiation and consistency-check state", "show mlag detail"], ["MLAG", "Troubleshooting", "Privileged EXEC", "show mlag interfaces", "Displays per-interface MLAG status and local/peer state", "show mlag interfaces"], ["BGP EVPN / VXLAN", "VXLAN Core", "Global Config", "interface Vxlan1", "Creates the logical VXLAN tunnel interface (VTEP)", "interface Vxlan1"], ["BGP EVPN / VXLAN", "VXLAN Core", "VXLAN Interface Config", "vxlan source-interface [interface]", "Sets the loopback interface used as the VTEP source address", "vxlan source-interface Loopback1"], ["BGP EVPN / VXLAN", "VXLAN Core", "VXLAN Interface Config", "vxlan udp-port [port]", "Sets the UDP destination port used for VXLAN encapsulation", "vxlan udp-port 4789"], ["BGP EVPN / VXLAN", "VXLAN Core", "VXLAN Interface Config", "vxlan vlan [vlan-id] vni [vni-id]", "Maps a local VLAN to a VXLAN Network Identifier (VNI)", "vxlan vlan 10 vni 10010"], ["BGP EVPN / VXLAN", "VXLAN Core", "VXLAN Interface Config", "vxlan flood vtep [ip-list]", "Manually defines flood-list VTEPs for BUM traffic replication", "vxlan flood vtep 10.255.0.2 10.255.0.3"], ["BGP EVPN / VXLAN", "EVPN Control Plane", "Global Config", "router bgp [as-number]", "Enables the BGP routing process used as the EVPN control plane", "router bgp 65000"], ["BGP EVPN / VXLAN", "EVPN Control Plane", "Router BGP Config", "neighbor [peer-group] peer-group", "Creates a BGP peer-group used for EVPN overlay neighbors", "neighbor EVPN-OVERLAY peer-group"], ["BGP EVPN / VXLAN", "EVPN Control Plane", "Router BGP Config", "neighbor [ip-address] remote-as [as-number]", "Sets the remote AS number for a BGP EVPN neighbor", "neighbor 10.255.0.2 remote-as 65000"], ["BGP EVPN / VXLAN", "EVPN Control Plane", "Router BGP Config", "neighbor [ip-address] update-source [interface]", "Sets the source interface used to establish the BGP session", "neighbor 10.255.0.2 update-source Loopback0"], ["BGP EVPN / VXLAN", "EVPN Control Plane", "Router BGP Config", "address-family evpn", "Enters the EVPN address-family configuration within BGP", "address-family evpn"], ["BGP EVPN / VXLAN", "EVPN Control Plane", "Address-Family Config", "neighbor [peer-group] activate", "Activates a peer-group within the current BGP address-family", "neighbor EVPN-OVERLAY activate"], ["BGP EVPN / VXLAN", "EVPN Control Plane", "Router BGP Config", "vlan [vlan-id]", "Enters per-VLAN configuration within BGP for EVPN route-distinguisher/target", "vlan 10"], ["BGP EVPN / VXLAN", "EVPN Control Plane", "BGP VLAN Config", "rd [route-distinguisher]", "Sets the route distinguisher used to make EVPN routes unique per VLAN", "rd 65000:10010"], ["BGP EVPN / VXLAN", "EVPN Control Plane", "BGP VLAN Config", "route-target both [target]", "Sets the import/export route target used for EVPN route filtering", "route-target both 65000:10010"], ["BGP EVPN / VXLAN", "EVPN Control Plane", "BGP VLAN Config", "redistribute learned", "Redistributes locally learned MAC/IP bindings into EVPN", "redistribute learned"], ["BGP EVPN / VXLAN", "Anycast Gateway", "Global Config", "ip virtual-router mac-address [mac-address]", "Sets a shared anycast gateway MAC used consistently across all VTEPs", "ip virtual-router mac-address 00:1c:73:00:dc:01"], ["BGP EVPN / VXLAN", "Troubleshooting", "Privileged EXEC", "show vxlan vni", "Displays configured VNI-to-VLAN mappings on the VTEP", "show vxlan vni"], ["BGP EVPN / VXLAN", "Troubleshooting", "Privileged EXEC", "show vxlan vtep", "Displays known remote VTEPs learned via the control plane", "show vxlan vtep"], ["BGP EVPN / VXLAN", "Troubleshooting", "Privileged EXEC", "show bgp evpn summary", "Displays a summary of BGP EVPN neighbor sessions", "show bgp evpn summary"], ["BGP EVPN / VXLAN", "Troubleshooting", "Privileged EXEC", "show bgp evpn route-type mac-ip", "Displays learned EVPN Type-2 MAC/IP advertisement routes", "show bgp evpn route-type mac-ip"], ["BGP EVPN / VXLAN", "Troubleshooting", "Privileged EXEC", "show ip bgp summary", "Displays a summary of all IPv4 BGP neighbor sessions", "show ip bgp summary"], ["CloudVision", "CVX Services", "Global Config", "cvx", "Enters CloudVision eXchange (CVX) controller configuration mode", "cvx"], ["CloudVision", "CVX Services", "CVX Config", "service mlag", "Enters MLAG service configuration on the CVX controller", "service mlag"], ["CloudVision", "CVX Services", "CVX Service Config", "no shutdown", "Enables the selected CVX service such as MLAG or VXLAN", "no shutdown"], ["CloudVision", "CVX Services", "CVX Config", "service vxlan", "Enters VXLAN control-service configuration on the CVX controller", "service vxlan"], ["CloudVision", "Provisioning", "CVP Workflow", "Add device via Zero Touch Provisioning (ZTP)", "Registers a new switch automatically when it boots with no startup-config and reaches CVP", "device bootstraps against CVP ZTP server on first boot"], ["CloudVision", "Provisioning", "CVP Workflow", "Apply configlet to container", "Pushes a reusable configuration snippet (configlet) to a device group in CVP", "assign configlet BASE-CONFIG to container LEAF-SWITCHES"], ["CloudVision", "Image Management", "CVP Workflow", "Create image bundle", "Bundles an EOS image and extensions for scheduled upgrade tasks in CVP", "create image bundle EOS-4.30.1F-BUNDLE"], ["CloudVision", "Image Management", "CVP Workflow", "Schedule upgrade task", "Schedules a non-disruptive rolling EOS upgrade across a device group", "schedule upgrade task for LEAF-SWITCHES container"], ["CloudVision", "Change Control", "CVP Workflow", "Create change control", "Creates an approval-gated change control wrapping one or more configlet pushes", "create change control MLAG-ROLLOUT-CC"], ["CloudVision", "Troubleshooting", "Privileged EXEC", "show cvx connections", "Displays the status of the switch's connection to the CVX controller", "show cvx connections"], ["CloudVision", "Troubleshooting", "Privileged EXEC", "show cvx service mlag", "Displays the CVX MLAG service state and consistency information", "show cvx service mlag"], ["CloudVision", "Troubleshooting", "Privileged EXEC", "show daemon TerminAttr", "Displays TerminAttr agent status and its connection to CloudVision", "show daemon TerminAttr"], ["Switch (EOS)", "VRF", "Global Config", "vrf instance [name]", "Creates a Virtual Routing and Forwarding instance for traffic isolation", "vrf instance CUSTOMER-A"], ["Switch (EOS)", "VRF", "Interface Config", "vrf [name]", "Associates an interface or SVI with a specific VRF instance", "vrf CUSTOMER-A"], ["Switch (EOS)", "VRF", "Privileged EXEC", "show vrf", "Displays all configured VRF instances and their assigned interfaces", "show vrf"], ["Switch (EOS)", "Advanced QoS", "Global Config", "priority-flow-control mode on", "Enables Priority Flow Control (PFC) globally for lossless Ethernet (DCB)", "priority-flow-control mode on"], ["Switch (EOS)", "Advanced QoS", "Interface Config", "priority-flow-control priority [value] no-drop", "Marks a specific CoS priority as no-drop under PFC", "priority-flow-control priority 3 no-drop"], ["Switch (EOS)", "Streaming Telemetry", "Global Config", "management api gnmi", "Enables the gNMI management API for streaming telemetry and model-driven configuration", "management api gnmi"], ["Switch (EOS)", "Streaming Telemetry", "GNMI Config", "transport grpc [name]", "Defines a gRPC transport listener used for gNMI telemetry subscriptions", "transport grpc DEFAULT"], ["Switch (EOS)", "Streaming Telemetry", "Global Config", "sflow sample [rate]", "Sets the sFlow packet sampling rate for traffic visibility export", "sflow sample 10000"], ["Switch (EOS)", "Streaming Telemetry", "Global Config", "sflow destination [ip-address] [port]", "Sets the collector destination for exported sFlow samples", "sflow destination 10.1.1.75 6343"], ["Switch (EOS)", "Streaming Telemetry", "Global Config", "sflow run", "Enables sFlow sampling and export globally on the switch", "sflow run"], ["Switch (EOS)", "Timing Advanced", "Global Config", "clock synchronize synce", "Enables Synchronous Ethernet (SyncE) to distribute a physical-layer clock reference", "clock synchronize synce"], ["Switch (EOS)", "Timing Advanced", "Interface Config", "synce enable", "Enables SyncE clock recovery and distribution on a specific interface", "synce enable"], ["Switch (EOS)", "Tap Aggregation Advanced", "Global Config", "tap aggregation", "Enters global tap aggregation mode configuration", "tap aggregation"], ["Switch (EOS)", "Tap Aggregation Advanced", "Interface Config", "switchport tool truncation [bytes]", "Truncates forwarded tap traffic to a fixed byte length to save tool-port bandwidth", "switchport tool truncation 128"], ["Switch (EOS)", "Tap Aggregation Advanced", "Interface Config", "switchport tap identity dot1q vlan [vlan-id]", "Tags tapped traffic with a VLAN identifying its original ingress port", "switchport tap identity dot1q vlan 100"], ["Switch (EOS)", "EOS SDK / Automation", "Privileged EXEC", "bash python3 [script.py]", "Runs a Python script using the on-box Linux shell, often leveraging the EOS SDK", "bash python3 /mnt/flash/healthcheck.py"], ["Switch (EOS)", "EOS SDK / Automation", "Global Config", "event-handler [name]", "Defines an EOS event-handler that triggers a script or action on a system event", "event-handler LINKDOWN-ALERT"], ["Switch (EOS)", "EOS SDK / Automation", "Event Handler Config", "trigger on-intf [interface] [linkup linkdown]", "Sets the interface link-state event that triggers the handler", "trigger on-intf Ethernet1 linkdown"], ["Switch (EOS)", "Advanced ACL", "Global Config", "ipv6 access-list [name]", "Creates a named IPv6 access control list", "ipv6 access-list CORP-V6-IN"], ["Switch (EOS)", "Advanced Troubleshooting", "Privileged EXEC", "show platform trident counters", "Displays hardware forwarding ASIC drop and error counters (platform-dependent)", "show platform trident counters"], ["Switch (EOS)", "Advanced Troubleshooting", "Privileged EXEC", "show agent logs crash", "Displays crash logs generated by EOS system agents for post-mortem analysis", "show agent logs crash"], ["Switch (EOS)", "Advanced Troubleshooting", "Privileged EXEC", "show interfaces Ethernet [id] transceiver", "Displays optical transceiver diagnostics including power levels and temperature", "show interfaces Ethernet1 transceiver"], ["Switch (EOS)", "Advanced Troubleshooting", "Privileged EXEC", "show platform fap [asic-id] counters drop", "Displays per-ASIC forwarding pipeline drop counters", "show platform fap 0 counters drop"], ["Switch (EOS)", "Advanced Troubleshooting", "Privileged EXEC", "trace [agent-name] setting [level]", "Enables an internal EOS agent trace for deep protocol-level debugging", "trace Bgp setting all"], ["Switch (EOS)", "Advanced Troubleshooting", "Privileged EXEC", "show system environment power", "Displays power supply status and per-component power draw", "show system environment power"], ["Switch (EOS)", "Advanced Troubleshooting", "Privileged EXEC", "show agent [agent-name] status", "Displays the run state and resource use of a specific EOS system agent", "show agent Bgp status"], ["MLAG", "Advanced Troubleshooting", "Privileged EXEC", "show mlag config-sanity", "Runs a consistency check comparing MLAG-relevant configuration on both peers", "show mlag config-sanity"], ["MLAG", "Advanced Features", "MLAG Config", "dual-primary detection delay [seconds]", "Sets the delay before declaring a dual-primary (split-brain) MLAG condition", "dual-primary detection delay 5"], ["MLAG", "Advanced Features", "MLAG Config", "dual-primary recovery-delay mlag [seconds]", "Sets how long the switch waits before restoring MLAG interfaces after a split-brain recovers", "dual-primary recovery-delay mlag 60"], ["BGP EVPN / VXLAN", "Advanced EVPN", "Router BGP Config", "neighbor [peer-group] additional-paths receive", "Enables receipt of multiple BGP paths per prefix (add-path) from an EVPN peer", "neighbor EVPN-OVERLAY additional-paths receive"], ["BGP EVPN / VXLAN", "Advanced EVPN", "BGP VLAN-Aware-Bundle Config", "vlan-aware-bundle [name]", "Defines a VLAN-aware bundle grouping multiple VLANs under one EVPN RD/RT pair", "vlan-aware-bundle TENANT-A"], ["BGP EVPN / VXLAN", "Advanced EVPN", "Bundle Config", "vlan [vlan-list]", "Adds member VLANs to a VLAN-aware EVPN bundle", "vlan 10,20,30"], ["BGP EVPN / VXLAN", "Advanced EVPN", "Global Config", "router l2-vpn", "Enters Layer-2 VPN configuration used for EVPN ESI multihoming parameters", "router l2-vpn"], ["BGP EVPN / VXLAN", "Advanced EVPN", "Interface Config", "evpn ethernet-segment identifier [esi]", "Assigns an Ethernet Segment Identifier for EVPN multihomed port-channel links", "evpn ethernet-segment identifier 0000:0000:0000:0000:0001"], ["BGP EVPN / VXLAN", "Advanced EVPN", "Router BGP Config", "neighbor [peer-group] route-reflector-client", "Configures an EVPN overlay peer as a route-reflector client to reduce full-mesh peering", "neighbor EVPN-OVERLAY route-reflector-client"], ["BGP EVPN / VXLAN", "Advanced Troubleshooting", "Privileged EXEC", "show bgp evpn route-type ethernet-segment", "Displays EVPN Type-4 Ethernet Segment routes used for multihoming DF election", "show bgp evpn route-type ethernet-segment"], ["BGP EVPN / VXLAN", "Advanced Troubleshooting", "Privileged EXEC", "show bgp evpn route-type imet", "Displays EVPN Type-3 Inclusive Multicast routes used for BUM traffic replication", "show bgp evpn route-type imet"], ["BGP EVPN / VXLAN", "Advanced Troubleshooting", "Privileged EXEC", "show vxlan counters vtep", "Displays per-VTEP packet counters for encapsulated and decapsulated VXLAN traffic", "show vxlan counters vtep"], ["BGP EVPN / VXLAN", "Advanced Troubleshooting", "Privileged EXEC", "show vxlan flood vtep", "Displays the current BUM traffic flood-list VTEPs for each VNI", "show vxlan flood vtep"], ["CloudVision", "Advanced Troubleshooting", "Privileged EXEC", "show cvx service mlag detail", "Displays detailed CVX-computed MLAG state used for controller-based consistency checks", "show cvx service mlag detail"], ["CloudVision", "Advanced Troubleshooting", "CVP Workflow", "Query device compliance report", "Runs a CVP compliance check comparing running-config against the assigned designed config", "run compliance report for LEAF-SWITCHES container"], ["CloudVision", "Advanced Troubleshooting", "CVP Workflow", "Roll back change control", "Reverts a previously executed CVP change control back to its pre-change state", "roll back change control MLAG-ROLLOUT-CC"]].map(r => ({device:r[0], category:r[1], mode:r[2], command:r[3], description:r[4], example:r[5]}));
+
+const DEVICE_COLORS = {"Switch (EOS)": "var(--d1)", "MLAG": "var(--d2)", "BGP EVPN / VXLAN": "var(--d3)", "CloudVision": "var(--d4)"};
+
+const rowsEl = document.getElementById('rows');
+const searchEl = document.getElementById('search');
+const emptyState = document.getElementById('emptyState');
+const countLine = document.getElementById('countLine');
+const categorySelect = document.getElementById('category');
+const deviceFilters = document.getElementById('deviceFilters');
+const resetFiltersBtn = document.getElementById('resetFilters');
+
+const EXTRA_COMMANDS = [
+  {device:"BGP EVPN / VXLAN", category:"Advanced", mode:"Global Config", command:"router bgp [asn]", description:"Enters BGP process configuration for EVPN control-plane tuning", example:"router bgp 65001"},
+  {device:"BGP EVPN / VXLAN", category:"Advanced", mode:"Router BGP", command:"address-family evpn", description:"Enters EVPN address-family configuration mode", example:"address-family evpn"},
+  {device:"MLAG", category:"Troubleshooting", mode:"Privileged EXEC", command:"show mlag interfaces detail", description:"Shows MLAG member state and consistency checks", example:"show mlag interfaces detail"},
+  {device:"Switch (EOS)", category:"Troubleshooting", mode:"Privileged EXEC", command:"show interfaces transceiver details", description:"Displays optics diagnostics and light levels", example:"show interfaces transceiver details"},
+  {device:"CloudVision", category:"Troubleshooting", mode:"Privileged EXEC", command:"show cvx connections", description:"Validates CloudVision exchange connectivity and status", example:"show cvx connections"}
+];
+
+if (Array.isArray(DATA) && DATA.length && Array.isArray(DATA[0])) {
+  DATA.push(...EXTRA_COMMANDS.map(c => [c.device, c.category, c.mode, c.command, c.description, c.example]));
+} else {
+  DATA.push(...EXTRA_COMMANDS);
+}
+
+let activeDevices = new Set();
+let activeCategory = "";
+
+const devices = [...new Set(DATA.map(d => d.device))];
+devices.forEach(dev => {
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.dataset.device = dev;
+  chip.innerHTML = `<span class="swatch" style="color:${DEVICE_COLORS[dev]}"></span>${dev}`;
+  chip.addEventListener('click', () => {
+    if (activeDevices.has(dev)) activeDevices.delete(dev);
+    else activeDevices.add(dev);
+    chip.classList.toggle('active');
+    render();
+  });
+  deviceFilters.insertBefore(chip, categorySelect);
+});
+
+const categories = [...new Set(DATA.map(d => d.category))].sort();
+categories.forEach(cat => {
+  const opt = document.createElement('option');
+  opt.value = cat;
+  opt.textContent = cat;
+  categorySelect.appendChild(opt);
+});
+categorySelect.addEventListener('change', () => { activeCategory = categorySelect.value; render(); });
+resetFiltersBtn.addEventListener('click', () => {
+  searchEl.value = '';
+  activeDevices.clear();
+  activeCategory = '';
+  categorySelect.value = '';
+  deviceFilters.querySelectorAll('.chip[data-device]').forEach(chip => chip.classList.remove('active'));
+  render();
+});
+
+function highlight(text, q) {
+  if (!q) return escapeHtml(text);
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return escapeHtml(text);
+  return escapeHtml(text.slice(0, idx)) + '<mark>' + escapeHtml(text.slice(idx, idx+q.length)) + '</mark>' + escapeHtml(text.slice(idx+q.length));
+}
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function render() {
+  const q = searchEl.value.trim().toLowerCase();
+  const filtered = DATA.filter(d => {
+    if (activeDevices.size && !activeDevices.has(d.device)) return false;
+    if (activeCategory && d.category !== activeCategory) return false;
+    if (!q) return true;
+    return (d.device + ' ' + d.category + ' ' + d.mode + ' ' + d.command + ' ' + d.description + ' ' + d.example)
+      .toLowerCase().includes(q);
+  });
+
+  rowsEl.innerHTML = filtered.map(d => `
+    <tr>
+      <td class="device" style="--tag-color:${DEVICE_COLORS[d.device]}"><span class="tag" style="--tag-color:${DEVICE_COLORS[d.device]}">${d.device}</span></td>
+      <td class="category">${highlight(d.category, q)}</td>
+      <td class="mode">${escapeHtml(d.mode)}</td>
+      <td class="command"><button class="cmd-btn" onclick="copyCmd(this)" data-cmd="${escapeHtml(d.command)}">${highlight(d.command, q)}<span class="copy-icon">â§‰</span></button></td>
+      <td class="desc">${highlight(d.description, q)}</td>
+      <td class="example">${highlight(d.example, q)}</td>
+    </tr>
+  `).join('');
+
+  emptyState.style.display = filtered.length ? 'none' : 'block';
+  countLine.innerHTML = `<b>${filtered.length}</b> / ${DATA.length} commands`;
+}
+
+function copyCmd(btn) {
+  const cmd = btn.getAttribute('data-cmd');
+  navigator.clipboard.writeText(cmd).then(() => {
+    const toast = document.getElementById('toast');
+    toast.textContent = `Copied: ${cmd}`;
+    toast.classList.add('show');
+    clearTimeout(window._t);
+    window._t = setTimeout(() => toast.classList.remove('show'), 1600);
+  });
+}
+
+searchEl.addEventListener('input', render);
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && document.activeElement !== searchEl) {
+    e.preventDefault();
+    searchEl.focus();
+  }
+  if (e.key === 'Escape') {
+    searchEl.value = '';
+    searchEl.blur();
+    render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
+

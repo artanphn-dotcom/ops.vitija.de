@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network CLI Reference Menu</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #090c11;
+    --bg-raised: #0e131b;
+    --panel: #10161f;
+    --line: #212a36;
+    --line-soft: #171e28;
+    --text: #e9eff6;
+    --text-dim: #8fa0b3;
+    --text-faint: #56667a;
+    --accent: #59d0b4;
+    --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --ease: cubic-bezier(.4,0,.2,1);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  ::selection { background: rgba(89,208,180,.3); color: #fff; }
+
+  body {
+    min-height: 100vh;
+    font-family: var(--sans);
+    color: var(--text);
+    background:
+      radial-gradient(1100px 480px at 8% -10%, rgba(89,208,180,0.10), transparent 60%),
+      radial-gradient(900px 480px at 100% -5%, rgba(243,180,99,0.08), transparent 55%),
+      var(--bg);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  a:focus-visible, button:focus-visible, .card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 30px 22px 56px;
+  }
+
+  /* ---------- Terminal chrome ---------- */
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(10, 14, 20, 0.75);
+    backdrop-filter: blur(12px);
+    padding: 11px 16px;
+    margin-bottom: 22px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; opacity: .9; }
+  .dot.r { background: #e0665a; }
+  .dot.y { background: #e4b45a; }
+  .dot.g { background: #5ec78b; }
+  .titlebar .path {
+    margin-left: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .titlebar .path b { color: var(--accent); font-weight: 500; }
+  .titlebar .cursor {
+    display: inline-block;
+    width: 7px; height: 13px;
+    background: var(--accent);
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: blink 1.05s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: linear-gradient(150deg, rgba(16,22,31,0.9), rgba(11,16,23,0.92));
+    padding: 44px 40px;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 40%, rgba(89,208,180,0.05) 55%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px 1px rgba(89,208,180,0.7);
+  }
+
+  h1 {
+    margin: 0 0 14px;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: clamp(28px, 4.2vw, 44px);
+    letter-spacing: -0.01em;
+    line-height: 1.18;
+    max-width: 15ch;
+  }
+  h1 .accent { color: var(--accent); }
+
+  .hero p.lede {
+    margin: 0;
+    color: var(--text-dim);
+    max-width: 640px;
+    line-height: 1.65;
+    font-size: 15.5px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 28px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .hero-meta div { font-family: var(--mono); }
+  .hero-meta .num { font-size: 22px; font-weight: 700; color: var(--text); }
+  .hero-meta .lbl { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .08em; margin-top: 2px; }
+
+  /* ---------- Grid ---------- */
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 6px 4px 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+  }
+  .section-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    --c: var(--accent);
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--panel);
+    padding: 18px 18px 16px;
+    text-decoration: none;
+    color: var(--text);
+    display: block;
+    overflow: hidden;
+    transition: transform .18s var(--ease), border-color .18s var(--ease), box-shadow .18s var(--ease);
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--c);
+    opacity: .85;
+  }
+  .card:hover, .card:focus-visible {
+    transform: translateY(-3px);
+    border-color: var(--line-soft);
+    box-shadow: 0 14px 30px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.02);
+  }
+
+  .card .vendor {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--c);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .card .vendor::before {
+    content: "";
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--c);
+  }
+
+  .card h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .card p {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+
+  .card .go {
+    margin-top: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    transition: color .18s var(--ease), gap .18s var(--ease);
+  }
+  .card:hover .go { color: var(--c); gap: 9px; }
+
+  .footer {
+    margin-top: 28px;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, .titlebar .cursor { animation: none !important; transition: none !important; }
+  }
+
+  @media (max-width: 700px) {
+    .shell { padding: 20px 14px 40px; }
+    .hero { padding: 28px 22px; }
+    .card { min-height: auto; }
+    .hero-meta { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <div class="titlebar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="path">admin@cli-hub:<b>~/network-references</b>$<span class="cursor"></span></span>
+    </div>
+
+    <section class="hero">
+      <p class="eyebrow">Reference Portal</p>
+      <h1>Command reference for every layer of the <span class="accent">stack</span>.</h1>
+      <p class="lede">One place for the commands you reach for under pressure — firewalls, switches, routers, clouds, and the CLIs that hold them together. Every reference is searchable, filterable, and built for fast lookups mid-incident.</p>
+      <div class="hero-meta">
+        <div><div class="num">14</div><div class="lbl">References &amp; tools</div></div>
+        <div><div class="num">1000+</div><div class="lbl">Commands indexed</div></div>
+        <div><div class="num">100%</div><div class="lbl">Offline &amp; static</div></div>
+      </div>
+    </section>
+
+    <p class="section-label">Interactive utilities</p>
+
+    <section class="grid" style="margin-bottom:26px;">
+      <a class="card" style="--c:#22d3ee" href="network-tools.html">
+        <div class="vendor">Console</div>
+        <h2>Network Utilities Console</h2>
+        <p>Build ping, traceroute, MTR, Nmap, DNS/BGP/WHOIS, TLS, and cURL/JSON payloads with live command previews and simulated output.</p>
+        <span class="go">Open console →</span>
+      </a>
+    </section>
+
+    <p class="section-label">Select a reference</p>
+
+    <section class="grid">
+      <a class="card" style="--c:#4fd1c5" href="cisco-cli-reference.html">
+        <div class="vendor">Cisco</div>
+        <h2>Cisco CLI Reference</h2>
+        <p>IOS, IOS-XE, NX-OS, ASA/FTD, WLC, ISE, and DNA Center command collection.</p>
+        <span class="go">Open reference →</span>
+      </a>
+
+      <a class="card" style="--c:#f5a742" href="arista-cli-reference.html">
+        <div class="vendor">Arista</div>
+        <h2>Arista EOS Reference</h2>
+        <p>EOS switching, MLAG, EVPN/VXLAN, and CloudVision operational command guide.</p>
+        <span class="go">Open reference →</span>
+      </a>
+
+      <a class="card" style="--c:#4ade80" href="fortigate-cli-reference.html">
+        <div class="vendor">Fortinet</div>
+        <h2>FortiGate Reference</h2>
+        <p>FortiOS firewall, SD-WAN, VPN, and management command reference set.</p>
+        <span class="go">Open reference →</span>
+      </a>
+
+      <a class="card" style="--c:#a78bfa" href="paloalto-cli-reference.html">
+        <div class="vendor">Palo Alto Networks</div>
+        <h2>PAN-OS CLI Reference</h2>
+        <p>PAN-OS, Panorama, GlobalProtect, and Prisma Access command reference.</p>
+        <span class="go">Open reference →</span>
+      </a>
+
+      <a class="card" style="--c:#22c55e" href="juniper-cli-reference.html">
+        <div class="vendor">Juniper</div>
+        <h2>Juniper CLI Reference</h2>
+        <p>Junos routing, switching, SRX security, and cloud operations command reference.</p>
+        <span class="go">Open reference →</span>
+      </a>
+
+      <a class="card" style="--c:#fb7185" href="checkpoint-cli-reference.html">
+        <div class="vendor">Check Point</div>
+        <h2>Check Point CLI Reference</h2>
+        <p>Gaia gateways, ClusterXL, VSX, and management operations command reference.</p>
+        <span class="go">Open reference →</span>
+      </a>
+
+      <a class="card" style="--c:#ff8a3d" href="sonicwall-cli-reference.html">
+        <div class="vendor">SonicWall</div>
+        <h2>SonicWall CLI Reference</h2>
+        <p>NSa and NSsp firewalls, SMA remote access, and analytics command reference.</p>
+        <span class="go">Open reference →</span>
+      </a>
+
+      <a class="card" style="--c:#ff6b5b" href="barracuda-cli-reference.html">
+        <div class="vendor">Barracuda Networks</div>
+        <h2>Barracuda CLI Reference</h2>
+        <p>CloudGen Firewall, Email Security, WAF, and cloud control command reference.</p>
+        <span class="go">Open reference →</span>
+      </a>
+
+      <a class="card" style="--c:#f2495c" href="f5-cli-reference.html">
+        <div class="vendor">F5</div>
+        <h2>F5 BIG-IP Reference</h2>
+        <p>LTM, GTM/DNS, Advanced WAF, BIG-IQ, and iControl operational commands.</p>
+        <span class="go">Open reference →</span>
+      </a>
+
+      <a class="card" style="--c:#f5c518" href="linux-cli-reference.html">
+        <div class="vendor">Linux</div>
+        <h2>Linux CLI Reference</h2>
+        <p>Linux system, networking, storage, service management, and troubleshooting commands.</p>
+        <span class="go">Open reference →</span>
+      </a>
+
+      <a class="card" style="--c:#4f8cff" href="gcp-cli-reference.html">
+        <div class="vendor">Google Cloud</div>
+        <h2>GCP CLI Reference</h2>
+        <p>gcloud, gsutil, bq, IAM, compute, networking, and cloud operations commands.</p>
+        <span class="go">Open reference →</span>
+      </a>
+
+      <a class="card" style="--c:#ff9900" href="aws-cli-reference.html">
+        <div class="vendor">Amazon Web Services</div>
+        <h2>AWS CLI Reference</h2>
+        <p>AWS core, EC2/VPC, storage/data, IAM, and troubleshooting commands.</p>
+        <span class="go">Open reference →</span>
+      </a>
+
+      <a class="card" style="--c:#a371f7" href="github-cli-reference.html">
+        <div class="vendor">GitHub</div>
+        <h2>GitHub Commands Reference</h2>
+        <p>Git workflows, GitHub CLI, pull requests, Actions, and security/admin commands.</p>
+        <span class="go">Open reference →</span>
+      </a>
+    </section>
+
+    <div class="footer">
+      <span>Offline static menu · index.html</span>
+      <span>Copyright Artan V.</span>
+    </div>
+  </div>
+</body>
+</html>

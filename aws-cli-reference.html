@@ -1,0 +1,414 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS CLI Command Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e1116;
+    --bg-raised:#161b22;
+    --panel:#11151b;
+    --border:#2a323d;
+    --border-soft:#1e242c;
+    --text:#e9f0f8;
+    --text-dim:#95a8bd;
+    --text-faint:#607086;
+    --signal:#ff9900;
+    --signal-rgb:255,153,0;
+    --d1:#ff9900;
+    --d2:#5ad6a8;
+    --d3:#6ec2ff;
+    --d4:#b58bf0;
+    --mono:'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius:10px;
+    --ease:cubic-bezier(.4,0,.2,1);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{margin:0;padding:0;}
+  ::selection{background:rgba(var(--signal-rgb),.32);color:#fff;}
+
+  body{
+    background:
+      radial-gradient(ellipse 1000px 520px at 12% -12%, rgba(var(--signal-rgb),0.10), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 100% 0%, rgba(var(--signal-rgb),0.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    line-height:1.5;
+  }
+
+  a{color:var(--signal);}
+
+  /* focus accessibility */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, .chip:focus-visible{
+    outline:2px solid var(--signal);
+    outline-offset:2px;
+    border-radius:4px;
+  }
+
+  /* ---------- Title bar ---------- */
+  .titlebar{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 22px;
+    background:rgba(10,14,20,0.72);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:30;
+  }
+  .dots{display:flex;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;opacity:.9;}
+  .dot.r{background:#e0665a;}.dot.y{background:#e4b45a;}.dot.g{background:#5ec78b;}
+  .titlebar .path{font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-left:6px;letter-spacing:.01em;}
+  .titlebar .path b{color:var(--signal);font-weight:500;}
+  .menu-btn{
+    margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--text);text-decoration:none;
+    border:1px solid var(--border);background:var(--panel);padding:6px 12px;border-radius:7px;
+    transition:border-color .18s var(--ease), background .18s var(--ease), transform .18s var(--ease), color .18s var(--ease);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .menu-btn::before{content:"←";opacity:.6;transition:transform .18s var(--ease);}
+  .menu-btn:hover{border-color:var(--signal);color:var(--signal);background:var(--bg-raised);}
+  .menu-btn:hover::before{transform:translateX(-2px);}
+
+  /* ---------- Hero ---------- */
+  header.hero{max-width:1720px;margin:0 auto;padding:40px 24px 20px;}
+  .eyebrow{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--signal);
+    text-transform:uppercase;margin:0 0 12px;display:flex;align-items:center;gap:8px;font-weight:600;
+  }
+  .eyebrow::before{content:"";width:7px;height:7px;background:var(--signal);border-radius:50%;box-shadow:0 0 10px 1px rgba(var(--signal-rgb),.8);}
+  h1{font-weight:700;font-size:clamp(26px,3.6vw,38px);margin:0 0 10px;letter-spacing:-0.015em;line-height:1.15;}
+  header.hero p.sub{color:var(--text-dim);font-size:15px;max-width:820px;line-height:1.6;margin:0;}
+
+  /* ---------- Controls ---------- */
+  .controls{
+    max-width:1720px;margin:0 auto;padding:0 24px 16px;
+    position:sticky;top:45px;z-index:20;
+    background:linear-gradient(var(--bg) 78%, transparent);
+    padding-top:6px;
+  }
+  .search-wrap{
+    display:flex;align-items:center;background:var(--panel);border:1px solid var(--border);
+    border-radius:var(--radius);padding:0 8px 0 16px;font-family:var(--mono);
+    transition:border-color .18s var(--ease), box-shadow .18s var(--ease);
+  }
+  .search-wrap:focus-within{border-color:var(--signal);box-shadow:0 0 0 3px rgba(var(--signal-rgb),0.15);}
+  .prompt{color:var(--signal);font-weight:600;font-size:14px;white-space:nowrap;}
+  #search{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:14px;padding:13px 10px;}
+  #search::placeholder{color:var(--text-faint);}
+  kbd{font-family:var(--mono);font-size:11px;color:var(--text-dim);border:1px solid var(--border-soft);background:var(--bg-raised);border-radius:5px;padding:3px 7px;margin-left:auto;}
+
+  .filters-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;}
+  .chip{
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:6.5px 14px;cursor:pointer;
+    display:flex;align-items:center;gap:7px;user-select:none;
+    transition:border-color .16s var(--ease), color .16s var(--ease), background .16s var(--ease), transform .12s var(--ease);
+  }
+  .chip:hover{border-color:var(--border-soft);color:var(--text);transform:translateY(-1px);}
+  .chip:active{transform:translateY(0);}
+  .chip .swatch{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .chip.active{color:var(--bg);background:var(--chip-color,var(--signal));border-color:var(--chip-color,var(--signal));font-weight:600;}
+  .reset-chip{margin-left:auto;}
+
+  select#category{
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:6.5px 30px 6.5px 14px;cursor:pointer;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0 L5 6 L10 0 Z' fill='%2395a8bd'/></svg>");
+    background-repeat:no-repeat;background-position:right 13px center;
+    transition:border-color .16s var(--ease);
+  }
+  select#category:hover{border-color:var(--border-soft);}
+  .count-line{font-family:var(--mono);font-size:12px;color:var(--text-faint);margin-left:4px;}
+
+  /* ---------- Table ---------- */
+  main{max-width:1720px;margin:0 auto;padding:6px 24px 54px;}
+  .table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--panel);}
+  .table-wrap > table{display:block;overflow:auto;max-height:none;}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  thead th{
+    text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--text-dim);font-weight:600;background:var(--bg-raised);padding:12px 16px;
+    border-bottom:1px solid var(--border);position:sticky;top:0;
+  }
+  tbody tr{border-bottom:1px solid var(--border-soft);transition:background .12s var(--ease);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:rgba(var(--signal-rgb),0.055);}
+  td{padding:13px 16px;vertical-align:top;font-size:13px;line-height:1.55;}
+  td.device{white-space:nowrap;border-left:3px solid var(--tag-color);}
+  .tag{
+    font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.02em;color:var(--tag-color);
+    background:color-mix(in srgb, var(--tag-color) 14%, transparent);
+    border:1px solid color-mix(in srgb, var(--tag-color) 38%, transparent);
+    padding:3.5px 9px;border-radius:5px;white-space:nowrap;display:inline-block;
+  }
+  td.category{color:var(--text-dim);font-size:13px;white-space:nowrap;}
+  td.mode{color:var(--text-faint);font-size:11.5px;font-family:var(--mono);white-space:nowrap;text-transform:uppercase;letter-spacing:.03em;}
+  td.command{font-family:var(--mono);white-space:normal;overflow-wrap:anywhere;}
+  td.desc{color:#eef4fb;white-space:normal;overflow-wrap:anywhere;}
+  td.example{font-family:var(--mono);color:var(--text-dim);font-size:12px;white-space:normal;overflow-wrap:anywhere;}
+  mark{background:rgba(var(--signal-rgb),.32);color:#fff;border-radius:2px;padding:0 1px;}
+  .cmd-btn{
+    background:none;border:none;padding:2px 0;color:var(--signal);font-family:var(--mono);font-size:13px;
+    cursor:pointer;text-align:left;display:inline-flex;align-items:center;gap:8px;border-radius:4px;
+  }
+  .cmd-btn:hover{text-decoration:underline;}
+  .copy-icon{opacity:.45;font-size:11px;transition:opacity .16s var(--ease);}
+  .cmd-btn:hover .copy-icon{opacity:.9;}
+
+  .empty{text-align:center;padding:70px 20px;color:var(--text-dim);font-family:var(--mono);font-size:13px;}
+
+  /* ---------- Examples ---------- */
+  .examples{max-width:1720px;margin:26px auto 10px;padding:0 24px;}
+  .examples h2{margin:0 0 8px;font-size:19px;letter-spacing:-0.01em;}
+  .examples p{margin:0 0 16px;color:var(--text-dim);font-size:14px;}
+  .example-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;}
+  .example-card{
+    border:1px solid var(--border);background:var(--panel);border-radius:var(--radius);padding:14px 16px;
+    transition:border-color .18s var(--ease), transform .18s var(--ease);
+  }
+  .example-card:hover{border-color:var(--border-soft);transform:translateY(-2px);}
+  .example-card h3{margin:0 0 10px;font-size:12.5px;font-family:var(--mono);color:var(--signal);letter-spacing:.02em;text-transform:uppercase;}
+  .example-card pre{margin:0;white-space:pre-wrap;font-family:var(--mono);font-size:12px;color:var(--text-dim);line-height:1.55;}
+
+  /* ---------- Toast & footer ---------- */
+  .toast{
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(14px);
+    background:var(--signal);color:#0a0e14;font-family:var(--mono);font-weight:700;font-size:13px;
+    padding:11px 20px;border-radius:9px;opacity:0;pointer-events:none;
+    transition:opacity .2s var(--ease), transform .2s var(--ease);z-index:50;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  footer{text-align:center;color:var(--text-faint);font-family:var(--mono);font-size:11.5px;padding:20px 24px 40px;border-top:1px solid var(--border-soft);margin-top:10px;max-width:1720px;margin-left:auto;margin-right:auto;}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none!important;}
+  }
+
+  @media (max-width:900px){
+    .controls{position:static;}
+    thead{display:none;}
+    table,tbody,tr,td{display:block;width:100%;}
+    tbody tr{padding:14px 16px 16px;position:relative;}
+    td{padding:3px 0;border:none!important;}
+    td.device{border-left:none;padding-bottom:8px;}
+    td.category, td.mode{display:inline-block;margin-right:10px;}
+    td.command{margin:6px 0 4px;}
+    td.example{margin-top:6px;padding:9px 11px;background:var(--bg-raised);border-radius:7px;}
+  }
+
+  @media (max-width:560px){
+    header.hero{padding:28px 16px 16px;}
+    .controls{padding:0 16px 14px;}
+    main{padding:6px 16px 40px;}
+    .examples{padding:0 16px;}
+    .filters-row{gap:6px;}
+    .reset-chip{margin-left:0;}
+  }
+
+</style>
+</head>
+<body>
+<div class="titlebar">
+  <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+  <span class="path">admin@aws-shell:<b>~/cli-reference</b>$</span>
+  <a class="menu-btn" href="index.html">Back to Menu</a>
+</div>
+
+<header class="hero">
+  <p class="eyebrow">AWS Reference</p>
+  <h1>AWS CLI Command Reference</h1>
+  <p class="sub">Searchable command reference for AWS CLI operations across EC2, VPC, S3, RDS, IAM, and DevOps including advanced and troubleshooting workflows.</p>
+</header>
+
+<div class="controls">
+  <div class="search-wrap"><span class="prompt">&gt;</span><input id="search" type="text" placeholder="search commands, descriptions, categories..." autocomplete="off" spellcheck="false"><kbd>/</kbd></div>
+  <div class="filters-row" id="deviceFilters">
+    <select id="category"><option value="">All categories</option></select>
+    <span class="count-line" id="countLine"></span>
+    <button class="chip reset-chip" id="resetFilters" type="button">Show All</button>
+  </div>
+</div>
+
+<main>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:12%">Device</th>
+          <th style="width:10%">Category</th>
+          <th style="width:9%">Mode</th>
+          <th style="width:20%">Command</th>
+          <th style="width:31%">Description</th>
+          <th style="width:18%">Example</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="emptyState" style="display:none;">No commands match your search.</div>
+  </div>
+</main>
+
+<section class="examples">
+  <h2>Configuration and Output Examples</h2>
+  <p>Operational snippets for baseline validation and fault isolation.</p>
+  <div class="example-grid">
+    <article class="example-card"><h3>EC2 Provisioning Example</h3><pre>aws ec2 run-instances --image-id ami-0123456789abcdef0 --instance-type t3.medium --subnet-id subnet-0123abcd --security-group-ids sg-0123abcd --count 1
+  aws ec2 create-tags --resources i-0123abcd --tags Key=Name,Value=app-node-01</pre></article>
+    <article class="example-card"><h3>Troubleshooting Output</h3><pre>$ aws ec2 describe-instance-status --include-all-instances
+  InstanceId      SystemStatus    InstanceStatus
+  i-0123abcd      impaired        ok</pre></article>
+  </div>
+</section>
+
+  <footer>AWS CLI Command Reference · offline static page · Copyright Artan V.</footer>
+<div class="toast" id="toast">Copied</div>
+
+<script>
+const DATA = [
+  {device:"AWS Core",category:"Config",mode:"aws",command:"aws configure list",description:"Displays active AWS CLI credential/provider settings.",example:"aws configure list"},
+  {device:"AWS Core",category:"STS",mode:"aws",command:"aws sts get-caller-identity",description:"Shows current principal identity.",example:"aws sts get-caller-identity"},
+  {device:"EC2 / VPC",category:"EC2",mode:"aws",command:"aws ec2 describe-instances",description:"Lists EC2 instances and metadata.",example:"aws ec2 describe-instances"},
+  {device:"EC2 / VPC",category:"VPC",mode:"aws",command:"aws ec2 describe-vpcs",description:"Lists VPCs.",example:"aws ec2 describe-vpcs"},
+  {device:"Data / Storage",category:"S3",mode:"aws",command:"aws s3 ls",description:"Lists S3 buckets.",example:"aws s3 ls"},
+  {device:"Data / Storage",category:"RDS",mode:"aws",command:"aws rds describe-db-instances",description:"Lists RDS instances.",example:"aws rds describe-db-instances"},
+  {device:"IAM / DevOps",category:"IAM",mode:"aws",command:"aws iam list-users",description:"Lists IAM users.",example:"aws iam list-users"},
+  {device:"IAM / DevOps",category:"EKS",mode:"aws",command:"aws eks list-clusters",description:"Lists EKS clusters.",example:"aws eks list-clusters"}
+];
+
+const EXTRA_COMMANDS = [];
+["us-east-1","us-east-2","us-west-1","us-west-2","eu-west-1","eu-central-1","ap-southeast-1","ap-northeast-1"].forEach(region => {
+  EXTRA_COMMANDS.push({device:"AWS Core",category:"Regions",mode:"aws",command:`aws ec2 describe-regions --region ${region}`,description:"Validates region endpoint and metadata access.",example:`aws ec2 describe-regions --region ${region}`});
+});
+["running","stopped","pending","terminated","stopping","shutting-down"].forEach(state => {
+  EXTRA_COMMANDS.push({device:"EC2 / VPC",category:"EC2",mode:"aws",command:`aws ec2 describe-instances --filters Name=instance-state-name,Values=${state}`,description:"Filters EC2 inventory by lifecycle state.",example:`aws ec2 describe-instances --filters Name=instance-state-name,Values=${state}`});
+});
+["vpc-aaa111","vpc-bbb222","vpc-ccc333","vpc-ddd444","vpc-eee555","vpc-fff666"].forEach(vpc => {
+  EXTRA_COMMANDS.push({device:"EC2 / VPC",category:"VPC",mode:"aws",command:`aws ec2 describe-subnets --filters Name=vpc-id,Values=${vpc}`,description:"Lists subnets in selected VPC.",example:`aws ec2 describe-subnets --filters Name=vpc-id,Values=${vpc}`});
+});
+["logs-bucket","artifacts-bucket","backup-bucket","analytics-bucket","media-bucket","terraform-state","audit-archive","raw-data-lake"].forEach(bucket => {
+  EXTRA_COMMANDS.push({device:"Data / Storage",category:"S3",mode:"aws",command:`aws s3 ls s3://${bucket}`,description:"Checks S3 bucket availability and contents.",example:`aws s3 ls s3://${bucket}`});
+});
+["Admin","ReadOnly","PowerUser","Billing","SecurityAudit","DevOps","SRE","DBA"].forEach(group => {
+  EXTRA_COMMANDS.push({device:"IAM / DevOps",category:"IAM",mode:"aws",command:`aws iam get-group --group-name ${group}`,description:"Shows IAM group members and metadata.",example:`aws iam get-group --group-name ${group}`});
+});
+
+const BULK_PACK = [];
+["aws cloudwatch describe-alarms","aws logs describe-log-groups","aws ec2 describe-instance-status --include-all-instances","aws ec2 describe-security-groups","aws ec2 describe-route-tables","aws ec2 describe-network-acls","aws ec2 describe-nat-gateways","aws elbv2 describe-load-balancers","aws autoscaling describe-auto-scaling-groups","aws cloudtrail describe-trails"].forEach(cmd => {
+  BULK_PACK.push({device:"EC2 / VPC",category:"Troubleshooting",mode:"aws",command:cmd,description:"Operational diagnostic command for compute and networking health.",example:cmd});
+});
+["aws rds describe-events --duration 60","aws dynamodb list-tables","aws elasticache describe-cache-clusters","aws redshift describe-clusters","aws backup list-backup-jobs","aws s3api get-bucket-versioning --bucket logs-bucket","aws s3api get-bucket-encryption --bucket logs-bucket","aws s3api get-public-access-block --bucket logs-bucket","aws kms list-keys","aws secretsmanager list-secrets"].forEach(cmd => {
+  BULK_PACK.push({device:"Data / Storage",category:"Advanced",mode:"aws",command:cmd,description:"Advanced data and storage governance query command.",example:cmd});
+});
+
+DATA.push(...EXTRA_COMMANDS, ...BULK_PACK);
+
+const DEVICE_COLORS = {
+  "AWS Core":"var(--d1)",
+  "EC2 / VPC":"var(--d2)",
+  "Data / Storage":"var(--d3)",
+  "IAM / DevOps":"var(--d4)"
+};
+
+const rowsEl = document.getElementById('rows');
+const searchEl = document.getElementById('search');
+const emptyState = document.getElementById('emptyState');
+const countLine = document.getElementById('countLine');
+const categorySelect = document.getElementById('category');
+const deviceFilters = document.getElementById('deviceFilters');
+const resetFiltersBtn = document.getElementById('resetFilters');
+
+let activeDevices = new Set();
+let activeCategory = "";
+
+const devices = [...new Set(DATA.map(d => d.device))];
+devices.forEach(dev => {
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.dataset.device = dev;
+  chip.innerHTML = `<span class="swatch" style="color:${DEVICE_COLORS[dev]}"></span>${dev}`;
+  chip.addEventListener('click', () => {
+    if (activeDevices.has(dev)) activeDevices.delete(dev); else activeDevices.add(dev);
+    chip.classList.toggle('active');
+    render();
+  });
+  deviceFilters.insertBefore(chip, categorySelect);
+});
+
+[...new Set(DATA.map(d => d.category))].sort().forEach(cat => {
+  const opt = document.createElement('option');
+  opt.value = cat;
+  opt.textContent = cat;
+  categorySelect.appendChild(opt);
+});
+
+categorySelect.addEventListener('change', () => { activeCategory = categorySelect.value; render(); });
+resetFiltersBtn.addEventListener('click', () => {
+  searchEl.value = '';
+  activeDevices.clear();
+  activeCategory = '';
+  categorySelect.value = '';
+  deviceFilters.querySelectorAll('.chip[data-device]').forEach(chip => chip.classList.remove('active'));
+  render();
+});
+
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function highlight(text,q){if(!q)return escapeHtml(text);const i=text.toLowerCase().indexOf(q.toLowerCase());if(i===-1)return escapeHtml(text);return escapeHtml(text.slice(0,i))+'<mark>'+escapeHtml(text.slice(i,i+q.length))+'</mark>'+escapeHtml(text.slice(i+q.length));}
+
+function render(){
+  const q = searchEl.value.trim().toLowerCase();
+  const filtered = DATA.filter(d => {
+    if (activeDevices.size && !activeDevices.has(d.device)) return false;
+    if (activeCategory && d.category !== activeCategory) return false;
+    if (!q) return true;
+    return (d.device+' '+d.category+' '+d.mode+' '+d.command+' '+d.description+' '+d.example).toLowerCase().includes(q);
+  });
+
+  rowsEl.innerHTML = filtered.map(d => `
+    <tr>
+      <td class="device" style="--tag-color:${DEVICE_COLORS[d.device]}"><span class="tag" style="--tag-color:${DEVICE_COLORS[d.device]}">${d.device}</span></td>
+      <td class="category">${highlight(d.category,q)}</td>
+      <td class="mode">${escapeHtml(d.mode)}</td>
+      <td class="command"><button class="cmd-btn" onclick="copyCmd(this)" data-cmd="${escapeHtml(d.command)}">${highlight(d.command,q)}<span class="copy-icon">[]</span></button></td>
+      <td class="desc">${highlight(d.description,q)}</td>
+      <td class="example">${highlight(d.example,q)}</td>
+    </tr>`).join('');
+
+  emptyState.style.display = filtered.length ? 'none' : 'block';
+  countLine.innerHTML = `<b>${filtered.length}</b> / ${DATA.length} commands`;
+}
+
+function copyCmd(btn){
+  const cmd = btn.getAttribute('data-cmd');
+  navigator.clipboard.writeText(cmd).then(() => {
+    const toast = document.getElementById('toast');
+    toast.textContent = `Copied: ${cmd}`;
+    toast.classList.add('show');
+    clearTimeout(window._t);
+    window._t = setTimeout(() => toast.classList.remove('show'), 1600);
+  });
+}
+
+searchEl.addEventListener('input', render);
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && document.activeElement !== searchEl) { e.preventDefault(); searchEl.focus(); }
+  if (e.key === 'Escape') { searchEl.value = ''; render(); }
+});
+render();
+</script>
+</body>
+</html>

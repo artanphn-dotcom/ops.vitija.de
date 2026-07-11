@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Utilities Console</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#090c11;
+    --bg-raised:#0e131b;
+    --panel:#10161f;
+    --border:#212a36;
+    --border-soft:#171e28;
+    --text:#e9eff6;
+    --text-dim:#8fa0b3;
+    --text-faint:#56667a;
+    --signal:#22d3ee;
+    --signal-rgb:34,211,238;
+    --good:#5ec78b;
+    --warn:#e4b45a;
+    --bad:#e0665a;
+    --mono:'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius:10px;
+    --ease:cubic-bezier(.4,0,.2,1);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{margin:0;padding:0;}
+  ::selection{background:rgba(var(--signal-rgb),.32);color:#fff;}
+
+  body{
+    background:
+      radial-gradient(ellipse 1000px 520px at 12% -12%, rgba(var(--signal-rgb),0.10), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 100% 0%, rgba(var(--signal-rgb),0.07), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    line-height:1.5;
+  }
+
+  a{color:var(--signal);}
+
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .chip:focus-visible, .tab-btn:focus-visible{
+    outline:2px solid var(--signal);
+    outline-offset:2px;
+    border-radius:4px;
+  }
+
+  /* ---------- Title bar ---------- */
+  .titlebar{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 22px;
+    background:rgba(10,14,20,0.72);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:30;
+  }
+  .dots{display:flex;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;opacity:.9;}
+  .dot.r{background:#e0665a;}.dot.y{background:#e4b45a;}.dot.g{background:#5ec78b;}
+  .titlebar .path{font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-left:6px;letter-spacing:.01em;}
+  .titlebar .path b{color:var(--signal);font-weight:500;}
+  .titlebar .cursor{display:inline-block;width:7px;height:13px;background:var(--signal);margin-left:2px;vertical-align:middle;animation:blink 1.05s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+  .menu-btn{
+    margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--text);text-decoration:none;
+    border:1px solid var(--border);background:var(--panel);padding:6px 12px;border-radius:7px;
+    transition:border-color .18s var(--ease), background .18s var(--ease), transform .18s var(--ease), color .18s var(--ease);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .menu-btn::before{content:"←";opacity:.6;}
+  .menu-btn:hover{border-color:var(--signal);color:var(--signal);transform:translateY(-1px);}
+
+  .shell{max-width:1180px;margin:0 auto;padding:26px 22px 60px;}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:linear-gradient(150deg, rgba(16,22,31,0.9), rgba(11,16,23,0.92));
+    padding:40px 38px;
+    margin-bottom:22px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(120deg, transparent 40%, rgba(var(--signal-rgb),0.06) 55%, transparent 70%);
+    pointer-events:none;
+  }
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;margin:0 0 16px;
+    font-family:var(--mono);color:var(--signal);font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;font-weight:600;
+  }
+  .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--signal);box-shadow:0 0 10px 1px rgba(var(--signal-rgb),0.7);}
+  h1{margin:0 0 14px;font-family:var(--mono);font-weight:700;font-size:clamp(26px,4vw,40px);letter-spacing:-0.01em;line-height:1.18;max-width:20ch;}
+  h1 .accent{color:var(--signal);}
+  .hero p.lede{margin:0;color:var(--text-dim);max-width:680px;line-height:1.65;font-size:15px;}
+  .hero-note{
+    margin-top:18px;display:flex;gap:10px;align-items:flex-start;
+    border:1px solid var(--border-soft);background:rgba(228,180,90,0.06);
+    border-radius:10px;padding:11px 14px;max-width:680px;
+  }
+  .hero-note svg{flex:none;margin-top:2px;color:var(--warn);}
+  .hero-note p{margin:0;font-size:12.5px;color:var(--text-dim);line-height:1.55;}
+  .hero-meta{display:flex;gap:28px;margin-top:24px;flex-wrap:wrap;}
+  .hero-meta div{font-family:var(--mono);}
+  .hero-meta .num{font-size:20px;font-weight:700;color:var(--text);}
+  .hero-meta .lbl{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+
+  /* ---------- Tabs ---------- */
+  .tabs{
+    display:flex;gap:6px;margin:24px 0 18px;
+    border-bottom:1px solid var(--border);
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab-btn{
+    font-family:var(--mono);font-size:12.5px;color:var(--text-dim);background:none;border:none;
+    padding:11px 16px;cursor:pointer;white-space:nowrap;position:relative;
+    display:flex;align-items:center;gap:8px;
+    transition:color .18s var(--ease);
+  }
+  .tab-btn .n{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:18px;height:18px;padding:0 4px;border-radius:5px;
+    background:var(--border-soft);color:var(--text-faint);font-size:10.5px;
+  }
+  .tab-btn::after{
+    content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;
+    background:var(--signal);transform:scaleX(0);transition:transform .18s var(--ease);
+  }
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{color:var(--signal);}
+  .tab-btn.active .n{background:rgba(var(--signal-rgb),0.16);color:var(--signal);}
+  .tab-btn.active::after{transform:scaleX(1);}
+
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;animation:fadeIn .22s var(--ease);}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .tool-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));
+    gap:14px;
+  }
+  .tool-grid.single{grid-template-columns:1fr;}
+
+  /* ---------- Tool card ---------- */
+  .tool-card{
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    background:var(--panel);
+    padding:18px 18px 16px;
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .tool-head{display:flex;align-items:flex-start;gap:11px;}
+  .tool-icon{
+    flex:none;width:30px;height:30px;border-radius:8px;
+    background:rgba(var(--signal-rgb),0.12);color:var(--signal);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-weight:700;font-size:13px;
+  }
+  .tool-head h3{margin:0 0 3px;font-size:15.5px;font-weight:600;letter-spacing:-.01em;}
+  .tool-desc{margin:0;font-size:12.5px;color:var(--text-dim);line-height:1.5;}
+
+  .tool-form{display:flex;flex-direction:column;gap:11px;}
+  .field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0;}
+  .field label{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;}
+  .field input[type="text"], .field input[type="number"], .field select, .field textarea{
+    width:100%;background:var(--bg-raised);border:1px solid var(--border);color:var(--text);
+    font-family:var(--mono);font-size:13px;padding:8px 10px;border-radius:7px;
+    transition:border-color .16s var(--ease), background .16s var(--ease);
+  }
+  .field select{appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%238fa0b3'/></svg>");
+    background-repeat:no-repeat;background-position:right 10px center;padding-right:26px;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--signal);background:#0b1119;outline:none;}
+  .field input.invalid{border-color:var(--bad);}
+  .field textarea{resize:vertical;min-height:84px;line-height:1.5;}
+  .field-error{font-size:11px;color:var(--bad);min-height:14px;font-family:var(--mono);}
+  .field-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .field-check{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;color:var(--text-dim);}
+  .field-check input{accent-color:var(--signal);}
+
+  .kv-rows{display:flex;flex-direction:column;gap:7px;}
+  .kv-row{display:flex;gap:7px;}
+  .kv-row input{flex:1;min-width:0;}
+  .kv-remove{
+    flex:none;width:32px;border:1px solid var(--border);background:var(--bg-raised);color:var(--text-faint);
+    border-radius:7px;cursor:pointer;font-family:var(--mono);font-size:14px;
+    transition:border-color .16s var(--ease), color .16s var(--ease);
+  }
+  .kv-remove:hover{border-color:var(--bad);color:var(--bad);}
+  .kv-add{
+    align-self:flex-start;font-family:var(--mono);font-size:11.5px;color:var(--signal);
+    background:none;border:1px dashed var(--border);border-radius:7px;padding:6px 11px;cursor:pointer;
+    transition:border-color .16s var(--ease);
+  }
+  .kv-add:hover{border-color:var(--signal);}
+
+  .tool-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;}
+  .run-btn{
+    font-family:var(--mono);font-size:12.5px;font-weight:600;color:#04181a;background:var(--signal);
+    border:none;padding:9px 16px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+    transition:transform .16s var(--ease), box-shadow .16s var(--ease), opacity .16s var(--ease);
+  }
+  .run-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(var(--signal-rgb),0.25);}
+  .run-btn:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none;}
+  .run-btn .key{background:rgba(4,24,26,0.25);padding:0 5px;border-radius:4px;font-size:11px;}
+  .run-btn.secondary{background:var(--bg-raised);color:var(--text);border:1px solid var(--border);}
+  .run-btn.secondary:hover{border-color:var(--signal);color:var(--signal);}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+  .cmd-preview{
+    font-family:var(--mono);font-size:11.5px;color:var(--text-dim);background:var(--bg-raised);
+    border:1px solid var(--border-soft);border-radius:6px;padding:6px 9px;
+    overflow-x:auto;white-space:pre;max-width:100%;flex:1;min-width:0;
+  }
+  .cmd-preview b{color:var(--signal);font-weight:600;}
+
+  /* ---------- Console output ---------- */
+  .console{border:1px solid var(--border-soft);border-radius:8px;overflow:hidden;background:#060a0f;}
+  .console-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:7px 11px;background:var(--bg-raised);border-bottom:1px solid var(--border-soft);
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--text-faint);
+  }
+  .console-head .status{display:inline-flex;align-items:center;gap:6px;}
+  .console-head .status.ok{color:var(--good);}
+  .console-head .status .dot2{width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .copy-btn{
+    background:none;border:1px solid var(--border);color:var(--text-faint);font-family:var(--mono);
+    font-size:10.5px;padding:3px 8px;border-radius:5px;cursor:pointer;transition:border-color .16s var(--ease), color .16s var(--ease);
+  }
+  .copy-btn:hover{border-color:var(--signal);color:var(--signal);}
+  .console pre{
+    margin:0;padding:12px 13px;font-family:var(--mono);font-size:12px;line-height:1.6;color:#c9e9e2;
+    white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto;
+  }
+  .console pre .g{color:var(--good);}
+  .console pre .y{color:var(--warn);}
+  .console pre .f{color:var(--signal);}
+  .console pre .r{color:var(--bad);}
+  .console pre .dim{color:var(--text-faint);}
+  .spinner-line{display:flex;align-items:center;gap:8px;color:var(--text-dim);font-family:var(--mono);font-size:12px;}
+  .spinner{
+    width:12px;height:12px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--signal);
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .json-output-wrap{position:relative;}
+  .json-status{font-family:var(--mono);font-size:11.5px;padding:4px 0;}
+  .json-status.ok{color:var(--good);}
+  .json-status.err{color:var(--bad);}
+
+  .footer{
+    margin-top:32px;border-top:1px solid var(--border);padding-top:16px;
+    font-family:var(--mono);font-size:12px;color:var(--text-faint);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  }
+
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(12px);
+    background:var(--panel);border:1px solid var(--signal);color:var(--text);
+    font-family:var(--mono);font-size:12.5px;padding:9px 16px;border-radius:8px;
+    opacity:0;pointer-events:none;transition:opacity .2s var(--ease), transform .2s var(--ease);
+    z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.4);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important;}}
+
+  @media (max-width:700px){
+    .shell{padding:18px 14px 44px;}
+    .hero{padding:26px 20px;}
+    .tool-grid{grid-template-columns:1fr;}
+    .field-row{flex-direction:column;}
+    .tool-actions{flex-direction:column;align-items:stretch;}
+    .cmd-preview{order:2;}
+  }
+</style>
+</head>
+<body>
+  <div class="titlebar">
+    <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+    <span class="path">admin@netops-console:<b>~/network-utilities</b>$<span class="cursor"></span></span>
+    <a class="menu-btn" href="index.html">Back to Menu</a>
+  </div>
+
+  <div class="shell">
+    <header class="hero">
+      <p class="eyebrow">Network Utilities</p>
+      <h1>Build and preview <span class="accent">network commands</span> before you run them.</h1>
+      <p class="lede">A console for the commands you reach for mid-incident: diagnostics, DNS/routing lookups, and API request builders. Fill in a target, pick your flags, and get the exact syntax plus a formatted preview of what the output looks like.</p>
+      <div class="hero-note">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+        <p>This is a static, client-side page — it builds correct command syntax live, but the console output is illustrative/simulated (browsers can't open raw sockets or spawn shell processes). Wire the "Run" actions to your own backend or agent to execute for real.</p>
+      </div>
+      <div class="hero-meta">
+        <div><div class="num">10</div><div class="lbl">Command builders</div></div>
+        <div><div class="num">3</div><div class="lbl">Categories</div></div>
+        <div><div class="num">Live</div><div class="lbl">Syntax preview</div></div>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="diagnostics" role="tab" aria-selected="true">Core Diagnostics <span class="n">4</span></button>
+      <button class="tab-btn" data-tab="dns" role="tab" aria-selected="false">DNS &amp; Routing <span class="n">4</span></button>
+      <button class="tab-btn" data-tab="api" role="tab" aria-selected="false">API Constructs <span class="n">2</span></button>
+    </nav>
+
+    <!-- ===================== CORE DIAGNOSTICS ===================== -->
+    <section class="tab-panel active" id="panel-diagnostics">
+      <div class="tool-grid">
+
+        <!-- PING -->
+        <article class="tool-card">
+          <div class="tool-head">
+            <span class="tool-icon">P</span>
+            <div><h3>Ping</h3><p class="tool-desc">ICMP echo request sweep to measure reachability and latency.</p></div>
+          </div>
+          <form class="tool-form" data-tool="ping" onsubmit="return runTool(event,'ping')">
+            <div class="field">
+              <label for="ping-target">Target host / IP</label>
+              <input type="text" id="ping-target" placeholder="8.8.8.8 or example.com" oninput="updatePreview('ping')" required>
+              <span class="field-error" id="ping-target-error"></span>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="ping-count">Count</label>
+                <select id="ping-count" onchange="updatePreview('ping')">
+                  <option value="4">4</option><option value="8">8</option><option value="16">16</option><option value="-t">Continuous</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="ping-size">Packet size</label>
+                <select id="ping-size" onchange="updatePreview('ping')">
+                  <option value="56">56 bytes</option><option value="128">128 bytes</option><option value="512">512 bytes</option><option value="1400">1400 bytes</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="ping-proto">Protocol</label>
+                <select id="ping-proto" onchange="updatePreview('ping')"><option>IPv4</option><option>IPv6</option></select>
+              </div>
+            </div>
+            <div class="tool-actions">
+              <button type="submit" class="run-btn">Run <span class="key">↵</span></button>
+              <code class="cmd-preview" id="ping-preview"></code>
+            </div>
+          </form>
+          <div class="console" id="ping-console" hidden>
+            <div class="console-head"><span>OUTPUT</span><button type="button" class="copy-btn" onclick="copyConsole('ping')">Copy</button></div>
+            <pre id="ping-output"></pre>
+          </div>
+        </article>
+
+        <!-- TRACEROUTE -->
+        <article class="tool-card">
+          <div class="tool-head">
+            <span class="tool-icon">T</span>
+            <div><h3>Traceroute</h3><p class="tool-desc">Map the hop-by-hop path packets take to a destination.</p></div>
+          </div>
+          <form class="tool-form" data-tool="traceroute" onsubmit="return runTool(event,'traceroute')">
+            <div class="field">
+              <label for="tr-target">Target host / IP</label>
+              <input type="text" id="tr-target" placeholder="example.com" oninput="updatePreview('traceroute')" required>
+              <span class="field-error" id="tr-target-error"></span>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="tr-hops">Max hops</label>
+                <select id="tr-hops" onchange="updatePreview('traceroute')">
+                  <option>10</option><option>20</option><option selected>30</option><option>64</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="tr-proto">Protocol</label>
+                <select id="tr-proto" onchange="updatePreview('traceroute')">
+                  <option value="icmp">ICMP</option><option value="udp">UDP</option><option value="tcp">TCP</option>
+                </select>
+              </div>
+            </div>
+            <label class="field-check"><input type="checkbox" id="tr-resolve" checked onchange="updatePreview('traceroute')"> Resolve hostnames</label>
+            <div class="tool-actions">
+              <button type="submit" class="run-btn">Run <span class="key">↵</span></button>
+              <code class="cmd-preview" id="traceroute-preview"></code>
+            </div>
+          </form>
+          <div class="console" id="traceroute-console" hidden>
+            <div class="console-head"><span>OUTPUT</span><button type="button" class="copy-btn" onclick="copyConsole('traceroute')">Copy</button></div>
+            <pre id="traceroute-output"></pre>
+          </div>
+        </article>
+
+        <!-- MTR -->
+        <article class="tool-card">
+          <div class="tool-head">
+            <span class="tool-icon">M</span>
+            <div><h3>MTR</h3><p class="tool-desc">Continuous traceroute + ping combined into one live report.</p></div>
+          </div>
+          <form class="tool-form" data-tool="mtr" onsubmit="return runTool(event,'mtr')">
+            <div class="field">
+              <label for="mtr-target">Target host / IP</label>
+              <input type="text" id="mtr-target" placeholder="example.com" oninput="updatePreview('mtr')" required>
+              <span class="field-error" id="mtr-target-error"></span>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="mtr-cycles">Cycles</label>
+                <select id="mtr-cycles" onchange="updatePreview('mtr')">
+                  <option value="10">10</option><option value="50" selected>50</option><option value="100">100</option><option value="0">Continuous</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="mtr-mode">Output mode</label>
+                <select id="mtr-mode" onchange="updatePreview('mtr')">
+                  <option value="report">Report (-r)</option><option value="live">Live curses UI</option>
+                </select>
+              </div>
+            </div>
+            <div class="tool-actions">
+              <button type="submit" class="run-btn">Run <span class="key">↵</span></button>
+              <code class="cmd-preview" id="mtr-preview"></code>
+            </div>
+          </form>
+          <div class="console" id="mtr-console" hidden>
+            <div class="console-head"><span>OUTPUT</span><button type="button" class="copy-btn" onclick="copyConsole('mtr')">Copy</button></div>
+            <pre id="mtr-output"></pre>
+          </div>
+        </article>
+
+        <!-- NMAP -->
+        <article class="tool-card">
+          <div class="tool-head">
+            <span class="tool-icon">N</span>
+            <div><h3>Nmap Port Scan</h3><p class="tool-desc">Enumerate open ports and services on a host you're authorized to scan.</p></div>
+          </div>
+          <form class="tool-form" data-tool="nmap" onsubmit="return runTool(event,'nmap')">
+            <div class="field">
+              <label for="nmap-target">Target (IP / CIDR / host)</label>
+              <input type="text" id="nmap-target" placeholder="10.0.0.0/24 or example.com" oninput="updatePreview('nmap')" required>
+              <span class="field-error" id="nmap-target-error"></span>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="nmap-type">Scan type</label>
+                <select id="nmap-type" onchange="updatePreview('nmap')">
+                  <option value="-sS">SYN stealth (-sS)</option>
+                  <option value="-sT">TCP connect (-sT)</option>
+                  <option value="-sU">UDP (-sU)</option>
+                  <option value="-sV">Version detect (-sV)</option>
+                  <option value="-A">Aggressive (-A)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="nmap-ports">Port range</label>
+                <input type="text" id="nmap-ports" value="1-1000" oninput="updatePreview('nmap')">
+              </div>
+            </div>
+            <div class="tool-actions">
+              <button type="submit" class="run-btn">Run <span class="key">↵</span></button>
+              <code class="cmd-preview" id="nmap-preview"></code>
+            </div>
+          </form>
+          <div class="console" id="nmap-console" hidden>
+            <div class="console-head"><span>OUTPUT</span><button type="button" class="copy-btn" onclick="copyConsole('nmap')">Copy</button></div>
+            <pre id="nmap-output"></pre>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===================== DNS & ROUTING ===================== -->
+    <section class="tab-panel" id="panel-dns">
+      <div class="tool-grid">
+
+        <!-- DIG / NSLOOKUP -->
+        <article class="tool-card">
+          <div class="tool-head">
+            <span class="tool-icon">D</span>
+            <div><h3>Dig / NSLookup</h3><p class="tool-desc">Query DNS records for a domain against any resolver.</p></div>
+          </div>
+          <form class="tool-form" data-tool="dig" onsubmit="return runTool(event,'dig')">
+            <div class="field">
+              <label for="dig-target">Domain</label>
+              <input type="text" id="dig-target" placeholder="example.com" oninput="updatePreview('dig')" required>
+              <span class="field-error" id="dig-target-error"></span>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="dig-type">Record type</label>
+                <select id="dig-type" onchange="updatePreview('dig')">
+                  <option>A</option><option>AAAA</option><option>MX</option><option>TXT</option><option>NS</option><option>CNAME</option><option>SOA</option><option>ANY</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="dig-server">DNS server (optional)</label>
+                <input type="text" id="dig-server" placeholder="1.1.1.1" oninput="updatePreview('dig')">
+              </div>
+            </div>
+            <div class="tool-actions">
+              <button type="submit" class="run-btn">Run <span class="key">↵</span></button>
+              <code class="cmd-preview" id="dig-preview"></code>
+            </div>
+          </form>
+          <div class="console" id="dig-console" hidden>
+            <div class="console-head"><span>OUTPUT</span><button type="button" class="copy-btn" onclick="copyConsole('dig')">Copy</button></div>
+            <pre id="dig-output"></pre>
+          </div>
+        </article>
+
+        <!-- BGP -->
+        <article class="tool-card">
+          <div class="tool-head">
+            <span class="tool-icon">B</span>
+            <div><h3>BGP Route Lookup</h3><p class="tool-desc">Query a public route server / looking glass for a prefix or ASN.</p></div>
+          </div>
+          <form class="tool-form" data-tool="bgp" onsubmit="return runTool(event,'bgp')">
+            <div class="field">
+              <label for="bgp-target">Prefix or ASN</label>
+              <input type="text" id="bgp-target" placeholder="8.8.8.0/24 or AS15169" oninput="updatePreview('bgp')" required>
+              <span class="field-error" id="bgp-target-error"></span>
+            </div>
+            <div class="field">
+              <label for="bgp-lg">Looking glass</label>
+              <select id="bgp-lg" onchange="updatePreview('bgp')">
+                <option>route-views.oregon-ix.net</option>
+                <option>route-views2.oregon-ix.net</option>
+                <option>rr.ntt.net</option>
+                <option>lg.he.net</option>
+              </select>
+            </div>
+            <div class="tool-actions">
+              <button type="submit" class="run-btn">Run <span class="key">↵</span></button>
+              <code class="cmd-preview" id="bgp-preview"></code>
+            </div>
+          </form>
+          <div class="console" id="bgp-console" hidden>
+            <div class="console-head"><span>OUTPUT</span><button type="button" class="copy-btn" onclick="copyConsole('bgp')">Copy</button></div>
+            <pre id="bgp-output"></pre>
+          </div>
+        </article>
+
+        <!-- WHOIS -->
+        <article class="tool-card">
+          <div class="tool-head">
+            <span class="tool-icon">W</span>
+            <div><h3>WHOIS</h3><p class="tool-desc">Look up registration, registrar, and ownership records.</p></div>
+          </div>
+          <form class="tool-form" data-tool="whois" onsubmit="return runTool(event,'whois')">
+            <div class="field">
+              <label for="whois-target">Domain or IP</label>
+              <input type="text" id="whois-target" placeholder="example.com" oninput="updatePreview('whois')" required>
+              <span class="field-error" id="whois-target-error"></span>
+            </div>
+            <div class="tool-actions">
+              <button type="submit" class="run-btn">Run <span class="key">↵</span></button>
+              <code class="cmd-preview" id="whois-preview"></code>
+            </div>
+          </form>
+          <div class="console" id="whois-console" hidden>
+            <div class="console-head"><span>OUTPUT</span><button type="button" class="copy-btn" onclick="copyConsole('whois')">Copy</button></div>
+            <pre id="whois-output"></pre>
+          </div>
+        </article>
+
+        <!-- SSL/TLS -->
+        <article class="tool-card">
+          <div class="tool-head">
+            <span class="tool-icon">S</span>
+            <div><h3>SSL/TLS Certificate Check</h3><p class="tool-desc">Inspect a server's certificate chain, expiry, and cipher suite.</p></div>
+          </div>
+          <form class="tool-form" data-tool="ssl" onsubmit="return runTool(event,'ssl')">
+            <div class="field">
+              <label for="ssl-target">Host:Port</label>
+              <input type="text" id="ssl-target" placeholder="example.com:443" oninput="updatePreview('ssl')" required>
+              <span class="field-error" id="ssl-target-error"></span>
+            </div>
+            <div class="field">
+              <label for="ssl-check">Check type</label>
+              <select id="ssl-check" onchange="updatePreview('ssl')">
+                <option value="chain">Full certificate chain</option>
+                <option value="expiry">Expiry only</option>
+                <option value="ciphers">Supported cipher suites</option>
+              </select>
+            </div>
+            <div class="tool-actions">
+              <button type="submit" class="run-btn">Run <span class="key">↵</span></button>
+              <code class="cmd-preview" id="ssl-preview"></code>
+            </div>
+          </form>
+          <div class="console" id="ssl-console" hidden>
+            <div class="console-head"><span>OUTPUT</span><button type="button" class="copy-btn" onclick="copyConsole('ssl')">Copy</button></div>
+            <pre id="ssl-output"></pre>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===================== API CONSTRUCTS ===================== -->
+    <section class="tab-panel" id="panel-api">
+      <div class="tool-grid single">
+
+        <!-- CURL BUILDER -->
+        <article class="tool-card">
+          <div class="tool-head">
+            <span class="tool-icon">C</span>
+            <div><h3>cURL Request Builder</h3><p class="tool-desc">Compose a request — method, headers, auth, and body — and generate the exact curl command.</p></div>
+          </div>
+          <form class="tool-form" data-tool="curl" onsubmit="return runTool(event,'curl')">
+            <div class="field-row">
+              <div class="field" style="max-width:140px;">
+                <label for="curl-method">Method</label>
+                <select id="curl-method" onchange="updatePreview('curl')">
+                  <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="curl-url">Request URL</label>
+                <input type="text" id="curl-url" placeholder="https://api.example.com/v1/resources" oninput="updatePreview('curl')" required>
+                <span class="field-error" id="curl-url-error"></span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Headers</label>
+              <div class="kv-rows" id="curl-headers">
+                <div class="kv-row">
+                  <input type="text" placeholder="Header name" value="Content-Type" oninput="updatePreview('curl')">
+                  <input type="text" placeholder="Value" value="application/json" oninput="updatePreview('curl')">
+                  <button type="button" class="kv-remove" onclick="removeRow(this)">×</button>
+                </div>
+              </div>
+              <button type="button" class="kv-add" onclick="addHeaderRow()">+ Add header</button>
+            </div>
+
+            <div class="field">
+              <label for="curl-auth">Authentication</label>
+              <select id="curl-auth" onchange="toggleAuthField();updatePreview('curl')">
+                <option value="none">None</option>
+                <option value="bearer">Bearer token</option>
+                <option value="basic">Basic (user:pass)</option>
+                <option value="apikey">API key header</option>
+              </select>
+            </div>
+            <div class="field" id="curl-auth-value-wrap" hidden>
+              <label id="curl-auth-value-label" for="curl-auth-value">Token</label>
+              <input type="text" id="curl-auth-value" placeholder="" oninput="updatePreview('curl')">
+            </div>
+
+            <div class="field">
+              <label for="curl-body">Request body (JSON)</label>
+              <textarea id="curl-body" placeholder='{
+  "key": "value"
+}' oninput="updatePreview('curl')"></textarea>
+            </div>
+
+            <div class="tool-actions" style="align-items:flex-start;">
+              <button type="submit" class="run-btn">Send <span class="key">↵</span></button>
+            </div>
+            <pre class="cmd-preview" id="curl-preview" style="white-space:pre-wrap;"></pre>
+          </form>
+          <div class="console" id="curl-console" hidden>
+            <div class="console-head"><span>RESPONSE</span><button type="button" class="copy-btn" onclick="copyConsole('curl')">Copy</button></div>
+            <pre id="curl-output"></pre>
+          </div>
+        </article>
+
+        <!-- JSON FORMATTER -->
+        <article class="tool-card">
+          <div class="tool-head">
+            <span class="tool-icon">{}</span>
+            <div><h3>JSON / REST Payload Formatter</h3><p class="tool-desc">Validate, pretty-print, or minify a JSON payload — runs entirely in your browser.</p></div>
+          </div>
+          <div class="tool-form">
+            <div class="field">
+              <label for="json-input">Payload</label>
+              <textarea id="json-input" style="min-height:140px;" placeholder='{"status":"ok","data":{"id":1,"tags":["a","b"]}}'></textarea>
+            </div>
+            <div class="btn-row">
+              <button type="button" class="run-btn" onclick="formatJson('pretty')">Format</button>
+              <button type="button" class="run-btn secondary" onclick="formatJson('minify')">Minify</button>
+              <button type="button" class="run-btn secondary" onclick="formatJson('validate')">Validate</button>
+            </div>
+            <div class="json-output-wrap">
+              <div class="json-status" id="json-status"></div>
+              <div class="console" id="json-console" hidden>
+                <div class="console-head"><span>RESULT</span><button type="button" class="copy-btn" onclick="copyConsole('json')">Copy</button></div>
+                <pre id="json-output"></pre>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <div class="footer">
+      <span>Client-side network utility console · network-tools.html</span>
+      <span>Copyright Artan V.</span>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Copied</div>
+
+<script>
+/* =========================================================
+   Network Utilities Console
+   - Builds real, syntactically-correct CLI/API commands live
+     from form input (genuinely functional).
+   - "Run" reveals a simulated/example output block, clearly
+     labeled, since a static page can't open raw sockets or
+     spawn processes (ping/traceroute/nmap/whois/dig/etc. all
+     require OS or backend-level execution).
+   - JSON formatter is fully real/functional (pure JS).
+   ========================================================= */
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected','true');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ---------- Validation helpers ---------- */
+const RE_IPV4 = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
+const RE_HOST = /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
+const RE_IPV6 = /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
+
+function isValidTarget(v){
+  v = v.trim();
+  if(!v) return false;
+  if(RE_IPV4.test(v)) return octetsOk(v);
+  if(RE_IPV6.test(v)) return true;
+  if(RE_HOST.test(v)) return true;
+  return false;
+}
+function octetsOk(v){
+  const base = v.split('/')[0];
+  return base.split('.').every(o => Number(o) >= 0 && Number(o) <= 255);
+}
+function isValidHostPort(v){
+  const parts = v.trim().split(':');
+  if(parts.length !== 2) return false;
+  return isValidTarget(parts[0]) && /^\d{1,5}$/.test(parts[1]) && Number(parts[1]) <= 65535;
+}
+function isValidUrl(v){
+  try { const u = new URL(v.trim()); return u.protocol === 'http:' || u.protocol === 'https:'; }
+  catch { return false; }
+}
+
+function setError(id, msg){
+  const el = document.getElementById(id + '-error');
+  const input = document.getElementById(id);
+  if(el) el.textContent = msg || '';
+  if(input) input.classList.toggle('invalid', !!msg);
+}
+
+/* ---------- Live command preview builders ---------- */
+function updatePreview(tool){
+  const set = (id, txt) => { const el = document.getElementById(id); if(el) el.innerHTML = txt; };
+
+  if(tool === 'ping'){
+    const t = val('ping-target') || '<target>';
+    const c = val('ping-count');
+    const size = val('ping-size');
+    const proto = val('ping-proto');
+    const flags = [proto === 'IPv6' ? '-6' : '', c === '-t' ? '-t' : `-c ${c}`, `-s ${size}`].filter(Boolean).join(' ');
+    set('ping-preview', `ping ${flags} <b>${esc(t)}</b>`);
+  }
+  if(tool === 'traceroute'){
+    const t = val('tr-target') || '<target>';
+    const hops = val('tr-hops');
+    const proto = val('tr-proto');
+    const resolve = document.getElementById('tr-resolve').checked;
+    const protoFlag = proto === 'tcp' ? '-T' : proto === 'udp' ? '-U' : '-I';
+    set('traceroute-preview', `traceroute ${protoFlag} -m ${hops} ${resolve ? '' : '-n '}<b>${esc(t)}</b>`.replace(/\s+/g,' ').trim());
+  }
+  if(tool === 'mtr'){
+    const t = val('mtr-target') || '<target>';
+    const cycles = val('mtr-cycles');
+    const mode = val('mtr-mode');
+    const flag = mode === 'report' ? `-r -c ${cycles === '0' ? '10' : cycles}` : `-c ${cycles === '0' ? '' : cycles}`.trim();
+    set('mtr-preview', `mtr ${flag} <b>${esc(t)}</b>`.replace(/\s+/g,' ').trim());
+  }
+  if(tool === 'nmap'){
+    const t = val('nmap-target') || '<target>';
+    const type = val('nmap-type');
+    const ports = val('nmap-ports') || '1-1000';
+    set('nmap-preview', `nmap ${type} -p ${esc(ports)} <b>${esc(t)}</b>`);
+  }
+  if(tool === 'dig'){
+    const t = val('dig-target') || '<domain>';
+    const type = val('dig-type');
+    const server = val('dig-server');
+    set('dig-preview', `dig ${server ? '@' + esc(server) + ' ' : ''}<b>${esc(t)}</b> ${type}`);
+  }
+  if(tool === 'bgp'){
+    const t = val('bgp-target') || '<prefix / ASN>';
+    const lg = val('bgp-lg');
+    set('bgp-preview', `ssh ${esc(lg)} "show ip bgp <b>${esc(t)}</b>"`);
+  }
+  if(tool === 'whois'){
+    const t = val('whois-target') || '<target>';
+    set('whois-preview', `whois <b>${esc(t)}</b>`);
+  }
+  if(tool === 'ssl'){
+    const t = val('ssl-target') || '<host:port>';
+    const check = val('ssl-check');
+    const extra = check === 'ciphers' ? '-cipher ALL' : check === 'chain' ? '-showcerts' : '';
+    const [host, port] = t.split(':');
+    set('ssl-preview', `openssl s_client -connect <b>${esc(t)}</b> -servername ${esc(host||'')} ${extra}`.replace(/\s+/g,' ').trim());
+  }
+  if(tool === 'curl'){
+    const method = val('curl-method');
+    const url = val('curl-url') || '<url>';
+    const rows = document.querySelectorAll('#curl-headers .kv-row');
+    let cmd = `curl -X ${method} \\\n  '<b>${esc(url)}</b>'`;
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const k = inputs[0].value.trim(), v = inputs[1].value.trim();
+      if(k) cmd += ` \\\n  -H '${esc(k)}: ${esc(v)}'`;
+    });
+    const auth = val('curl-auth');
+    const authVal = val('curl-auth-value');
+    if(auth === 'bearer' && authVal) cmd += ` \\\n  -H 'Authorization: Bearer ${esc(authVal)}'`;
+    if(auth === 'basic' && authVal) cmd += ` \\\n  -u '${esc(authVal)}'`;
+    if(auth === 'apikey' && authVal) cmd += ` \\\n  -H 'X-API-Key: ${esc(authVal)}'`;
+    const body = val('curl-body');
+    if(body && method !== 'GET') cmd += ` \\\n  -d '${esc(body.trim())}'`;
+    set('curl-preview', cmd);
+  }
+}
+function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ---------- Header rows (curl builder) ---------- */
+function addHeaderRow(){
+  const wrap = document.getElementById('curl-headers');
+  const row = document.createElement('div');
+  row.className = 'kv-row';
+  row.innerHTML = `<input type="text" placeholder="Header name" oninput="updatePreview('curl')">
+    <input type="text" placeholder="Value" oninput="updatePreview('curl')">
+    <button type="button" class="kv-remove" onclick="removeRow(this)">×</button>`;
+  wrap.appendChild(row);
+}
+function removeRow(btn){ btn.closest('.kv-row').remove(); updatePreview('curl'); }
+function toggleAuthField(){
+  const auth = val('curl-auth');
+  const wrap = document.getElementById('curl-auth-value-wrap');
+  const label = document.getElementById('curl-auth-value-label');
+  const input = document.getElementById('curl-auth-value');
+  if(auth === 'none'){ wrap.hidden = true; return; }
+  wrap.hidden = false;
+  if(auth === 'bearer'){ label.textContent = 'Bearer token'; input.placeholder = 'eyJhbGciOi...'; }
+  if(auth === 'basic'){ label.textContent = 'user:pass'; input.placeholder = 'user:password'; }
+  if(auth === 'apikey'){ label.textContent = 'API key'; input.placeholder = 'sk_live_...'; }
+}
+
+/* ---------- Run / simulate output ---------- */
+function runTool(evt, tool){
+  evt.preventDefault();
+  updatePreview(tool);
+
+  const targetField = { ping:'ping-target', traceroute:'tr-target', mtr:'mtr-target', nmap:'nmap-target',
+                         dig:'dig-target', bgp:'bgp-target', whois:'whois-target', ssl:'ssl-target', curl:'curl-url' }[tool];
+  const value = val(targetField);
+  const validators = { ping:isValidTarget, traceroute:isValidTarget, mtr:isValidTarget, nmap:isValidTarget,
+                        dig:isValidTarget, bgp:v=>v.length>2, whois:isValidTarget, ssl:isValidHostPort, curl:isValidUrl };
+
+  if(!validators[tool](value)){
+    const msg = tool === 'curl' ? 'Enter a valid http(s) URL.'
+              : tool === 'ssl' ? 'Use host:port format, e.g. example.com:443'
+              : tool === 'bgp' ? 'Enter a prefix (10.0.0.0/24) or ASN (AS15169).'
+              : 'Enter a valid IP, CIDR, or hostname.';
+    setError(targetField, msg);
+    return false;
+  }
+  setError(targetField, '');
+
+  const btn = evt.target.querySelector('.run-btn') || evt.target;
+  const consoleBox = document.getElementById(tool + '-console');
+  const out = document.getElementById(tool + '-output');
+
+  btn.disabled = true;
+  consoleBox.hidden = false;
+  out.innerHTML = '';
+  const spin = document.createElement('div');
+  spin.className = 'spinner-line';
+  spin.innerHTML = '<span class="spinner"></span> running…';
+  out.appendChild(spin);
+  consoleBox.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  setTimeout(() => {
+    out.innerHTML = buildSimulatedOutput(tool, value);
+    btn.disabled = false;
+  }, 650 + Math.random()*400);
+
+  return false;
+}
+
+function buildSimulatedOutput(tool, target){
+  const dim = t => `<span class="dim">${esc(t)}</span>`;
+  const g = t => `<span class="g">${esc(t)}</span>`;
+  const y = t => `<span class="y">${esc(t)}</span>`;
+  const f = t => `<span class="f">${esc(t)}</span>`;
+  const head = `${dim('# simulated output — preview only')}\n`;
+
+  if(tool === 'ping'){
+    const c = val('ping-count') === '-t' ? 4 : Number(val('ping-count'));
+    let lines = `${f('PING')} ${esc(target)} (${fakeIp(target)}) 56(84) bytes of data.\n`;
+    for(let i=1;i<=Math.min(c,6);i++){
+      lines += `64 bytes from ${fakeIp(target)}: icmp_seq=${i} ttl=54 time=${(8+Math.random()*20).toFixed(1)} ms\n`;
+    }
+    lines += `\n--- ${esc(target)} ping statistics ---\n${g(`${c} packets transmitted, ${c} received, 0% packet loss`)}\n`;
+    return head + lines;
+  }
+  if(tool === 'traceroute'){
+    const hops = Math.min(Number(val('tr-hops')), 8);
+    let lines = `${f('traceroute to')} ${esc(target)} (${fakeIp(target)}), ${val('tr-hops')} hops max\n`;
+    for(let i=1;i<=hops;i++){
+      lines += ` ${i}  ${i===hops?g(esc(target)):dim('hop-'+i+'.transit.net')}  (${fakeIp(target,i)})  ${(2+i*4+Math.random()*5).toFixed(2)} ms\n`;
+    }
+    return head + lines;
+  }
+  if(tool === 'mtr'){
+    const hops = 5;
+    let lines = `${f('HOST:')} netops-console                Loss%   Snt   Last   Avg  Best  Wrst StDev\n`;
+    for(let i=1;i<=hops;i++){
+      const loss = i===hops ? '0.0%' : `${(Math.random()*2).toFixed(1)}%`;
+      lines += `  ${i}. ${i===hops?g(esc(target)):dim('hop-'+i+'.transit.net')}   ${loss}    50   ${(3+i*3).toFixed(1)}  ${(3+i*3).toFixed(1)}   2.1  ${(4+i*4).toFixed(1)}   1.2\n`;
+    }
+    return head + lines;
+  }
+  if(tool === 'nmap'){
+    const ports = [22,80,443,3306,8080].slice(0, 3 + Math.floor(Math.random()*2));
+    let lines = `${f('Starting Nmap')} scan report for ${esc(target)} (${fakeIp(target)})\nHost is up (0.012s latency).\n\nPORT     STATE  SERVICE\n`;
+    const svc = {22:'ssh',80:'http',443:'https',3306:'mysql',8080:'http-proxy'};
+    ports.forEach(p => { lines += `${String(p).padEnd(9)}${g('open')}   ${svc[p]}\n`; });
+    lines += `\n${dim('Nmap done: 1 IP address (1 host up) scanned')}\n`;
+    return head + lines;
+  }
+  if(tool === 'dig'){
+    const type = val('dig-type');
+    let lines = `${f(';; ANSWER SECTION:')}\n`;
+    if(type === 'A' || type === 'ANY') lines += `${esc(target)}.       300  IN  A      ${fakeIp(target)}\n`;
+    if(type === 'AAAA' || type === 'ANY') lines += `${esc(target)}.       300  IN  AAAA   2606:4700:${(Math.random()*9999|0)}::${(Math.random()*9999|0)}\n`;
+    if(type === 'MX' || type === 'ANY') lines += `${esc(target)}.       3600 IN  MX     10 mail.${esc(target)}.\n`;
+    if(type === 'NS' || type === 'ANY') lines += `${esc(target)}.       3600 IN  NS     ns1.${esc(target)}.\n`;
+    if(type === 'TXT') lines += `${esc(target)}.       3600 IN  TXT    "v=spf1 include:_spf.${esc(target)} ~all"\n`;
+    lines += `\n${dim(';; Query time: ' + (12+Math.random()*40|0) + ' msec')}\n`;
+    return head + lines;
+  }
+  if(tool === 'bgp'){
+    const lg = val('bgp-lg');
+    return head + `${f('BGP routing table entry for')} ${esc(target)}\n` +
+      `Paths: (3 available, best #2)\n` +
+      `  ${dim('Path 1:')} 174 3356 15169, (received-only)\n` +
+      `  ${g('Path 2: 3257 3356 15169, (best path)')}\n` +
+      `  ${dim('Path 3:')} 6939 3356 15169\n` +
+      `${dim('Source: ' + esc(lg))}\n`;
+  }
+  if(tool === 'whois'){
+    return head + `Domain Name: ${esc(target).toUpperCase()}\n` +
+      `Registrar: Example Registrar, LLC\n` +
+      `Creation Date: 2014-03-11T00:00:00Z\n` +
+      `Registry Expiry Date: 2027-03-11T00:00:00Z\n` +
+      `Name Server: NS1.${esc(target).toUpperCase()}\n` +
+      `Name Server: NS2.${esc(target).toUpperCase()}\n` +
+      `${g('Domain Status: clientTransferProhibited')}\n`;
+  }
+  if(tool === 'ssl'){
+    const check = val('ssl-check');
+    if(check === 'expiry'){
+      return head + `${f('Subject:')} CN=${esc(target.split(':')[0])}\n` +
+        `${g('notBefore=Jan 15 00:00:00 2026 GMT')}\n` +
+        `${y('notAfter=Apr 15 23:59:59 2026 GMT')}\n` +
+        `${dim('93 days remaining')}\n`;
+    }
+    if(check === 'ciphers'){
+      return head + `${f('Supported cipher suites:')}\n` +
+        `${g('TLS_AES_256_GCM_SHA384')}\n${g('TLS_CHACHA20_POLY1305_SHA256')}\n${g('ECDHE-RSA-AES128-GCM-SHA256')}\n${y('ECDHE-RSA-AES256-SHA (legacy)')}\n`;
+    }
+    return head + `${f('Certificate chain')}\n` +
+      ` 0 s:CN=${esc(target.split(':')[0])}\n   i:C=US, O=Let's Encrypt, CN=R3\n` +
+      ` 1 s:C=US, O=Let's Encrypt, CN=R3\n   i:C=US, O=Internet Security Research Group, CN=ISRG Root X1\n` +
+      `${g('Verify return code: 0 (ok)')}\n`;
+  }
+  if(tool === 'curl'){
+    return head + `${f('HTTP/2 200')}\n` +
+      `content-type: application/json\n` +
+      `date: ${new Date().toUTCString()}\n\n` +
+      `${g('{')}\n  "status": "ok",\n  "path": "${esc(new URL(target).pathname || '/')}",\n  "method": "${val('curl-method')}"\n${g('}')}\n`;
+  }
+  return head + 'No output.';
+}
+
+function fakeIp(seed, salt){
+  let h = 0;
+  for(let i=0;i<seed.length;i++) h = (h*31 + seed.charCodeAt(i)) >>> 0;
+  h += (salt||0)*97;
+  return `${(h>>24)&255}.${(h>>16)&255}.${(h>>8)&255}.${h&255}`;
+}
+
+/* ---------- JSON formatter (fully real) ---------- */
+function formatJson(mode){
+  const input = document.getElementById('json-input').value;
+  const status = document.getElementById('json-status');
+  const box = document.getElementById('json-console');
+  const out = document.getElementById('json-output');
+  try{
+    const parsed = JSON.parse(input);
+    if(mode === 'validate'){
+      status.textContent = '✓ Valid JSON';
+      status.className = 'json-status ok';
+      box.hidden = true;
+      return;
+    }
+    const text = mode === 'minify' ? JSON.stringify(parsed) : JSON.stringify(parsed, null, 2);
+    status.textContent = mode === 'minify' ? '✓ Minified' : '✓ Formatted';
+    status.className = 'json-status ok';
+    out.textContent = text;
+    box.hidden = false;
+  }catch(e){
+    status.textContent = '✗ ' + e.message;
+    status.className = 'json-status err';
+    box.hidden = true;
+  }
+}
+
+/* ---------- Copy to clipboard ---------- */
+function copyConsole(tool){
+  const out = document.getElementById(tool + '-output');
+  copyText(out.innerText);
+}
+function copyText(text){
+  navigator.clipboard.writeText(text).then(showToast).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove(); showToast();
+  });
+}
+function showToast(){
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+/* ---------- Init: populate previews on load ---------- */
+['ping','traceroute','mtr','nmap','dig','bgp','whois','ssl','curl'].forEach(updatePreview);
+</script>
+</body>
+</html>

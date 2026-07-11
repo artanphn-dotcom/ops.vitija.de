@@ -1,0 +1,546 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux CLI Command Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0d0d;
+    --bg-raised:#161616;
+    --panel:#121212;
+    --border:#2e2e2e;
+    --border-soft:#232323;
+    --text:#e9f0f8;
+    --text-dim:#95a8bd;
+    --text-faint:#607086;
+    --signal:#f5c518;
+    --signal-rgb:245,197,24;
+    --d1:#f5c518;
+    --d2:#e0665a;
+    --d3:#5b9dd9;
+    --d4:#6fc98a;
+    --mono:'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius:10px;
+    --ease:cubic-bezier(.4,0,.2,1);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{margin:0;padding:0;}
+  ::selection{background:rgba(var(--signal-rgb),.32);color:#fff;}
+
+  body{
+    background:
+      radial-gradient(ellipse 1000px 520px at 12% -12%, rgba(var(--signal-rgb),0.10), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 100% 0%, rgba(var(--signal-rgb),0.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    line-height:1.5;
+  }
+
+  a{color:var(--signal);}
+
+  /* focus accessibility */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, .chip:focus-visible{
+    outline:2px solid var(--signal);
+    outline-offset:2px;
+    border-radius:4px;
+  }
+
+  /* ---------- Title bar ---------- */
+  .titlebar{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 22px;
+    background:rgba(10,14,20,0.72);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:30;
+  }
+  .dots{display:flex;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;opacity:.9;}
+  .dot.r{background:#e0665a;}.dot.y{background:#e4b45a;}.dot.g{background:#5ec78b;}
+  .titlebar .path{font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-left:6px;letter-spacing:.01em;}
+  .titlebar .path b{color:var(--signal);font-weight:500;}
+  .menu-btn{
+    margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--text);text-decoration:none;
+    border:1px solid var(--border);background:var(--panel);padding:6px 12px;border-radius:7px;
+    transition:border-color .18s var(--ease), background .18s var(--ease), transform .18s var(--ease), color .18s var(--ease);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .menu-btn::before{content:"←";opacity:.6;transition:transform .18s var(--ease);}
+  .menu-btn:hover{border-color:var(--signal);color:var(--signal);background:var(--bg-raised);}
+  .menu-btn:hover::before{transform:translateX(-2px);}
+
+  /* ---------- Hero ---------- */
+  header.hero{max-width:1720px;margin:0 auto;padding:40px 24px 20px;}
+  .eyebrow{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--signal);
+    text-transform:uppercase;margin:0 0 12px;display:flex;align-items:center;gap:8px;font-weight:600;
+  }
+  .eyebrow::before{content:"";width:7px;height:7px;background:var(--signal);border-radius:50%;box-shadow:0 0 10px 1px rgba(var(--signal-rgb),.8);}
+  h1{font-weight:700;font-size:clamp(26px,3.6vw,38px);margin:0 0 10px;letter-spacing:-0.015em;line-height:1.15;}
+  header.hero p.sub{color:var(--text-dim);font-size:15px;max-width:820px;line-height:1.6;margin:0;}
+
+  /* ---------- Controls ---------- */
+  .controls{
+    max-width:1720px;margin:0 auto;padding:0 24px 16px;
+    position:sticky;top:45px;z-index:20;
+    background:linear-gradient(var(--bg) 78%, transparent);
+    padding-top:6px;
+  }
+  .search-wrap{
+    display:flex;align-items:center;background:var(--panel);border:1px solid var(--border);
+    border-radius:var(--radius);padding:0 8px 0 16px;font-family:var(--mono);
+    transition:border-color .18s var(--ease), box-shadow .18s var(--ease);
+  }
+  .search-wrap:focus-within{border-color:var(--signal);box-shadow:0 0 0 3px rgba(var(--signal-rgb),0.15);}
+  .prompt{color:var(--signal);font-weight:600;font-size:14px;white-space:nowrap;}
+  #search{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:14px;padding:13px 10px;}
+  #search::placeholder{color:var(--text-faint);}
+  kbd{font-family:var(--mono);font-size:11px;color:var(--text-dim);border:1px solid var(--border-soft);background:var(--bg-raised);border-radius:5px;padding:3px 7px;margin-left:auto;}
+
+  .filters-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;}
+  .chip{
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:6.5px 14px;cursor:pointer;
+    display:flex;align-items:center;gap:7px;user-select:none;
+    transition:border-color .16s var(--ease), color .16s var(--ease), background .16s var(--ease), transform .12s var(--ease);
+  }
+  .chip:hover{border-color:var(--border-soft);color:var(--text);transform:translateY(-1px);}
+  .chip:active{transform:translateY(0);}
+  .chip .swatch{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .chip.active{color:var(--bg);background:var(--chip-color,var(--signal));border-color:var(--chip-color,var(--signal));font-weight:600;}
+  .reset-chip{margin-left:auto;}
+
+  select#category{
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:6.5px 30px 6.5px 14px;cursor:pointer;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0 L5 6 L10 0 Z' fill='%2395a8bd'/></svg>");
+    background-repeat:no-repeat;background-position:right 13px center;
+    transition:border-color .16s var(--ease);
+  }
+  select#category:hover{border-color:var(--border-soft);}
+  .count-line{font-family:var(--mono);font-size:12px;color:var(--text-faint);margin-left:4px;}
+
+  /* ---------- Table ---------- */
+  main{max-width:1720px;margin:0 auto;padding:6px 24px 54px;}
+  .table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--panel);}
+  .table-wrap > table{display:block;overflow:auto;max-height:none;}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  thead th{
+    text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--text-dim);font-weight:600;background:var(--bg-raised);padding:12px 16px;
+    border-bottom:1px solid var(--border);position:sticky;top:0;
+  }
+  tbody tr{border-bottom:1px solid var(--border-soft);transition:background .12s var(--ease);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:rgba(var(--signal-rgb),0.055);}
+  td{padding:13px 16px;vertical-align:top;font-size:13px;line-height:1.55;}
+  td.device{white-space:nowrap;border-left:3px solid var(--tag-color);}
+  .tag{
+    font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.02em;color:var(--tag-color);
+    background:color-mix(in srgb, var(--tag-color) 14%, transparent);
+    border:1px solid color-mix(in srgb, var(--tag-color) 38%, transparent);
+    padding:3.5px 9px;border-radius:5px;white-space:nowrap;display:inline-block;
+  }
+  td.category{color:var(--text-dim);font-size:13px;white-space:nowrap;}
+  td.mode{color:var(--text-faint);font-size:11.5px;font-family:var(--mono);white-space:nowrap;text-transform:uppercase;letter-spacing:.03em;}
+  td.command{font-family:var(--mono);white-space:normal;overflow-wrap:anywhere;}
+  td.desc{color:#eef4fb;white-space:normal;overflow-wrap:anywhere;}
+  td.example{font-family:var(--mono);color:var(--text-dim);font-size:12px;white-space:normal;overflow-wrap:anywhere;}
+  mark{background:rgba(var(--signal-rgb),.32);color:#fff;border-radius:2px;padding:0 1px;}
+  .cmd-btn{
+    background:none;border:none;padding:2px 0;color:var(--signal);font-family:var(--mono);font-size:13px;
+    cursor:pointer;text-align:left;display:inline-flex;align-items:center;gap:8px;border-radius:4px;
+  }
+  .cmd-btn:hover{text-decoration:underline;}
+  .copy-icon{opacity:.45;font-size:11px;transition:opacity .16s var(--ease);}
+  .cmd-btn:hover .copy-icon{opacity:.9;}
+
+  .empty{text-align:center;padding:70px 20px;color:var(--text-dim);font-family:var(--mono);font-size:13px;}
+
+  /* ---------- Examples ---------- */
+  .examples{max-width:1720px;margin:26px auto 10px;padding:0 24px;}
+  .examples h2{margin:0 0 8px;font-size:19px;letter-spacing:-0.01em;}
+  .examples p{margin:0 0 16px;color:var(--text-dim);font-size:14px;}
+  .example-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;}
+  .example-card{
+    border:1px solid var(--border);background:var(--panel);border-radius:var(--radius);padding:14px 16px;
+    transition:border-color .18s var(--ease), transform .18s var(--ease);
+  }
+  .example-card:hover{border-color:var(--border-soft);transform:translateY(-2px);}
+  .example-card h3{margin:0 0 10px;font-size:12.5px;font-family:var(--mono);color:var(--signal);letter-spacing:.02em;text-transform:uppercase;}
+  .example-card pre{margin:0;white-space:pre-wrap;font-family:var(--mono);font-size:12px;color:var(--text-dim);line-height:1.55;}
+
+  /* ---------- Toast & footer ---------- */
+  .toast{
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(14px);
+    background:var(--signal);color:#0a0e14;font-family:var(--mono);font-weight:700;font-size:13px;
+    padding:11px 20px;border-radius:9px;opacity:0;pointer-events:none;
+    transition:opacity .2s var(--ease), transform .2s var(--ease);z-index:50;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  footer{text-align:center;color:var(--text-faint);font-family:var(--mono);font-size:11.5px;padding:20px 24px 40px;border-top:1px solid var(--border-soft);margin-top:10px;max-width:1720px;margin-left:auto;margin-right:auto;}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none!important;}
+  }
+
+  @media (max-width:900px){
+    .controls{position:static;}
+    thead{display:none;}
+    table,tbody,tr,td{display:block;width:100%;}
+    tbody tr{padding:14px 16px 16px;position:relative;}
+    td{padding:3px 0;border:none!important;}
+    td.device{border-left:none;padding-bottom:8px;}
+    td.category, td.mode{display:inline-block;margin-right:10px;}
+    td.command{margin:6px 0 4px;}
+    td.example{margin-top:6px;padding:9px 11px;background:var(--bg-raised);border-radius:7px;}
+  }
+
+  @media (max-width:560px){
+    header.hero{padding:28px 16px 16px;}
+    .controls{padding:0 16px 14px;}
+    main{padding:6px 16px 40px;}
+    .examples{padding:0 16px;}
+    .filters-row{gap:6px;}
+    .reset-chip{margin-left:0;}
+  }
+
+</style>
+</head>
+<body>
+<div class="titlebar">
+  <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+  <span class="path">admin@linux-host:<b>~/cli-reference</b>$</span>
+  <a class="menu-btn" href="index.html">Back to Menu</a>
+</div>
+
+<header class="hero">
+  <p class="eyebrow">Linux Reference</p>
+  <h1>Linux CLI Command Reference</h1>
+  <p class="sub">Searchable command reference for Linux administration, networking, storage, services, and DevOps automation with advanced and troubleshooting workflows.</p>
+</header>
+
+<div class="controls">
+  <div class="search-wrap"><span class="prompt">&gt;</span><input id="search" type="text" placeholder="search commands, descriptions, categories..." autocomplete="off" spellcheck="false"><kbd>/</kbd></div>
+  <div class="filters-row" id="deviceFilters">
+    <select id="category"><option value="">All categories</option></select>
+    <span class="count-line" id="countLine"></span>
+    <button class="chip reset-chip" id="resetFilters" type="button">Show All</button>
+  </div>
+</div>
+
+<main>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:12%">Device</th>
+          <th style="width:10%">Category</th>
+          <th style="width:9%">Mode</th>
+          <th style="width:20%">Command</th>
+          <th style="width:31%">Description</th>
+          <th style="width:18%">Example</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="emptyState" style="display:none;">No commands match your search.</div>
+  </div>
+</main>
+
+<section class="examples">
+  <h2>Configuration and Output Examples</h2>
+  <p>Operational snippets for baseline validation and fault isolation.</p>
+  <div class="example-grid">
+    <article class="example-card"><h3>System Hardening Example</h3><pre>sudo useradd -m opsuser
+  sudo passwd -l root
+  sudo ufw allow 22/tcp
+  sudo systemctl enable --now fail2ban</pre></article>
+    <article class="example-card"><h3>Troubleshooting Output</h3><pre>$ systemctl --failed
+  UNIT             LOAD   ACTIVE SUB    DESCRIPTION
+  nginx.service    loaded failed failed The nginx HTTP server
+
+  $ journalctl -u nginx -n 30 --no-pager</pre></article>
+  </div>
+</section>
+
+  <footer>Linux CLI Command Reference · offline static page · Copyright Artan V.</footer>
+<div class="toast" id="toast">Copied</div>
+
+<script>
+const DATA = [
+  {device:"Linux System",category:"System",mode:"Shell",command:"uname -a",description:"Displays kernel and architecture information.",example:"uname -a"},
+  {device:"Linux System",category:"System",mode:"Shell",command:"lsb_release -a",description:"Displays distro release metadata.",example:"lsb_release -a"},
+  {device:"Linux System",category:"System",mode:"Shell",command:"uptime",description:"Shows uptime and load averages.",example:"uptime"},
+  {device:"Linux System",category:"Users",mode:"Shell",command:"id",description:"Shows current user UID/GID context.",example:"id"},
+  {device:"Linux System",category:"Processes",mode:"Shell",command:"ps aux --sort=-%cpu",description:"Lists top CPU-consuming processes.",example:"ps aux --sort=-%cpu | head"},
+  {device:"Linux System",category:"Processes",mode:"Shell",command:"top -o %CPU",description:"Interactive process monitoring sorted by CPU.",example:"top -o %CPU"},
+  {device:"Storage / Services",category:"Storage",mode:"Shell",command:"lsblk -f",description:"Lists block devices and filesystems.",example:"lsblk -f"},
+  {device:"DevOps / Automation",category:"Automation",mode:"Shell",command:"crontab -l",description:"Displays scheduled cron jobs.",example:"crontab -l"},
+
+  {device:"Networking / Security",category:"Interfaces",mode:"Shell",command:"ip addr",description:"Shows interface IP assignments.",example:"ip addr"},
+  {device:"Networking / Security",category:"Interfaces",mode:"Shell",command:"ip -brief addr show",description:"Shows a condensed one-line summary of every interface and its addresses.",example:"ip -brief addr show"},
+  {device:"Networking / Security",category:"Interfaces",mode:"Shell",command:"ip link show",description:"Lists interfaces with operational state, MTU, and MAC address.",example:"ip link show"},
+  {device:"Networking / Security",category:"Interfaces",mode:"Shell",command:"ip link set <iface> up",description:"Administratively enables a network interface.",example:"sudo ip link set eth0 up"},
+  {device:"Networking / Security",category:"Interfaces",mode:"Shell",command:"ip link set <iface> down",description:"Administratively disables a network interface.",example:"sudo ip link set eth0 down"},
+  {device:"Networking / Security",category:"Interfaces",mode:"Shell",command:"ip addr add <cidr> dev <iface>",description:"Assigns an IP address to an interface.",example:"sudo ip addr add 10.0.0.5/24 dev eth0"},
+  {device:"Networking / Security",category:"Interfaces",mode:"Shell",command:"ip addr flush dev <iface>",description:"Removes all IP addresses from an interface.",example:"sudo ip addr flush dev eth0"},
+  {device:"Networking / Security",category:"Interfaces",mode:"Shell",command:"ip -s link show <iface>",description:"Shows interface RX/TX packet, byte, error, and drop counters.",example:"ip -s link show eth0"},
+  {device:"Networking / Security",category:"Interfaces",mode:"Shell",command:"ip link add <vlan> link <iface> type vlan id <id>",description:"Creates an 802.1Q VLAN sub-interface.",example:"sudo ip link add eth0.100 link eth0 type vlan id 100"},
+  {device:"Networking / Security",category:"Interfaces",mode:"Shell",command:"ip link add <bond> type bond",description:"Creates a bonded (link-aggregated) interface.",example:"sudo ip link add bond0 type bond mode 802.3ad"},
+  {device:"Networking / Security",category:"Interfaces",mode:"Shell",command:"ethtool -S <iface>",description:"Displays detailed NIC driver statistics and error counters.",example:"ethtool -S eth0"},
+  {device:"Networking / Security",category:"Interfaces",mode:"Shell",command:"ethtool -i <iface>",description:"Shows NIC driver, firmware, and bus information.",example:"ethtool -i eth0"},
+
+  {device:"Networking / Security",category:"Routing",mode:"Shell",command:"ip route",description:"Shows active routing table.",example:"ip route"},
+  {device:"Networking / Security",category:"Routing",mode:"Shell",command:"ip route get <ip>",description:"Shows which route and source address the kernel would use to reach a destination.",example:"ip route get 8.8.8.8"},
+  {device:"Networking / Security",category:"Routing",mode:"Shell",command:"ip route add <cidr> via <gw>",description:"Adds a static route via a given gateway.",example:"sudo ip route add 10.20.0.0/16 via 192.168.1.1"},
+  {device:"Networking / Security",category:"Routing",mode:"Shell",command:"ip route del <cidr>",description:"Removes a route from the routing table.",example:"sudo ip route del 10.20.0.0/16"},
+  {device:"Networking / Security",category:"Routing",mode:"Shell",command:"ip route add default via <gw>",description:"Sets the default gateway route.",example:"sudo ip route add default via 192.168.1.1"},
+  {device:"Networking / Security",category:"Routing",mode:"Shell",command:"ip rule show",description:"Lists policy routing rules used for source-based/multi-table routing.",example:"ip rule show"},
+  {device:"Networking / Security",category:"Routing",mode:"Shell",command:"ip route show table <id>",description:"Shows routes in a specific policy routing table.",example:"ip route show table 100"},
+  {device:"Networking / Security",category:"Routing",mode:"Shell",command:"route -n",description:"Shows the kernel IP routing table in numeric form (legacy net-tools).",example:"route -n"},
+  {device:"Networking / Security",category:"Routing",mode:"Shell",command:"traceroute <host>",description:"Traces the network path and per-hop latency to a destination.",example:"traceroute 8.8.8.8"},
+  {device:"Networking / Security",category:"Routing",mode:"Shell",command:"tracepath <host>",description:"Traces the path to a host without requiring elevated privileges.",example:"tracepath 8.8.8.8"},
+  {device:"Networking / Security",category:"Routing",mode:"Shell",command:"mtr <host>",description:"Combines ping and traceroute into a continuously updating path/latency report.",example:"mtr 8.8.8.8"},
+
+  {device:"Networking / Security",category:"Sockets",mode:"Shell",command:"ss -tulpen",description:"Lists all listening TCP/UDP sockets with owning process and PID.",example:"ss -tulpen"},
+  {device:"Networking / Security",category:"Sockets",mode:"Shell",command:"ss -tan state established",description:"Lists established TCP connections.",example:"ss -tan state established"},
+  {device:"Networking / Security",category:"Sockets",mode:"Shell",command:"ss -s",description:"Shows summary socket statistics by protocol.",example:"ss -s"},
+  {device:"Networking / Security",category:"Sockets",mode:"Shell",command:"netstat -tulpen",description:"Lists listening sockets and owning processes (legacy net-tools).",example:"netstat -tulpen"},
+  {device:"Networking / Security",category:"Sockets",mode:"Shell",command:"lsof -i -P -n",description:"Lists open network sockets mapped to processes.",example:"lsof -i -P -n"},
+  {device:"Networking / Security",category:"Sockets",mode:"Shell",command:"fuser -n tcp <port>",description:"Identifies the process holding a given TCP port.",example:"sudo fuser -n tcp 443"},
+
+  {device:"Networking / Security",category:"DNS",mode:"Shell",command:"dig <host>",description:"Queries DNS and returns detailed resolver/authoritative response data.",example:"dig example.com"},
+  {device:"Networking / Security",category:"DNS",mode:"Shell",command:"dig +short <host>",description:"Returns just the resolved IP address(es) for a host.",example:"dig +short example.com"},
+  {device:"Networking / Security",category:"DNS",mode:"Shell",command:"dig -x <ip>",description:"Performs a reverse DNS (PTR) lookup for an IP address.",example:"dig -x 8.8.8.8"},
+  {device:"Networking / Security",category:"DNS",mode:"Shell",command:"nslookup <host>",description:"Queries DNS servers for name resolution records.",example:"nslookup example.com"},
+  {device:"Networking / Security",category:"DNS",mode:"Shell",command:"host <host>",description:"Performs a simple DNS lookup for a hostname.",example:"host example.com"},
+  {device:"Networking / Security",category:"DNS",mode:"Shell",command:"resolvectl status",description:"Shows systemd-resolved DNS configuration per interface.",example:"resolvectl status"},
+  {device:"Networking / Security",category:"DNS",mode:"Shell",command:"cat /etc/resolv.conf",description:"Displays configured DNS resolvers and search domains.",example:"cat /etc/resolv.conf"},
+
+  {device:"Networking / Security",category:"Firewall",mode:"Shell",command:"iptables -L -n -v",description:"Lists active iptables rules with packet/byte counters.",example:"sudo iptables -L -n -v"},
+  {device:"Networking / Security",category:"Firewall",mode:"Shell",command:"iptables -t nat -L -n -v",description:"Lists NAT table rules (DNAT/SNAT/MASQUERADE).",example:"sudo iptables -t nat -L -n -v"},
+  {device:"Networking / Security",category:"Firewall",mode:"Shell",command:"iptables -A INPUT -p tcp --dport <port> -j ACCEPT",description:"Appends a rule allowing inbound TCP traffic on a port.",example:"sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT"},
+  {device:"Networking / Security",category:"Firewall",mode:"Shell",command:"iptables -A FORWARD -i <in> -o <out> -j ACCEPT",description:"Allows forwarding of traffic between two interfaces.",example:"sudo iptables -A FORWARD -i eth0 -o eth1 -j ACCEPT"},
+  {device:"Networking / Security",category:"Firewall",mode:"Shell",command:"iptables -t nat -A POSTROUTING -o <iface> -j MASQUERADE",description:"Enables NAT masquerading for outbound traffic on an interface.",example:"sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE"},
+  {device:"Networking / Security",category:"Firewall",mode:"Shell",command:"nft list ruleset",description:"Lists the active nftables ruleset.",example:"sudo nft list ruleset"},
+  {device:"Networking / Security",category:"Firewall",mode:"Shell",command:"nft add rule inet filter input tcp dport <port> accept",description:"Adds an nftables rule permitting inbound traffic on a port.",example:"sudo nft add rule inet filter input tcp dport 22 accept"},
+  {device:"Networking / Security",category:"Firewall",mode:"Shell",command:"firewall-cmd --list-all",description:"Shows the active firewalld zone configuration.",example:"sudo firewall-cmd --list-all"},
+  {device:"Networking / Security",category:"Firewall",mode:"Shell",command:"firewall-cmd --add-port=<port>/tcp --permanent",description:"Permanently opens a TCP port in firewalld.",example:"sudo firewall-cmd --add-port=8080/tcp --permanent && sudo firewall-cmd --reload"},
+  {device:"Networking / Security",category:"Firewall",mode:"Shell",command:"ufw status verbose",description:"Shows UFW firewall status and active rules.",example:"sudo ufw status verbose"},
+  {device:"Networking / Security",category:"Firewall",mode:"Shell",command:"ufw allow <port>/tcp",description:"Allows inbound TCP traffic on a port via UFW.",example:"sudo ufw allow 443/tcp"},
+
+  {device:"Networking / Security",category:"Bridging",mode:"Shell",command:"bridge link show",description:"Lists interfaces attached to Linux bridges.",example:"bridge link show"},
+  {device:"Networking / Security",category:"Bridging",mode:"Shell",command:"ip link add <br> type bridge",description:"Creates a new Linux software bridge.",example:"sudo ip link add br0 type bridge"},
+  {device:"Networking / Security",category:"Bridging",mode:"Shell",command:"ip link set <iface> master <br>",description:"Attaches an interface to a bridge.",example:"sudo ip link set eth1 master br0"},
+  {device:"Networking / Security",category:"Bridging",mode:"Shell",command:"bridge fdb show",description:"Shows the bridge forwarding database (MAC-to-port mappings).",example:"bridge fdb show"},
+
+  {device:"Networking / Security",category:"ARP / Neighbors",mode:"Shell",command:"ip neigh show",description:"Shows the ARP/neighbor discovery table.",example:"ip neigh show"},
+  {device:"Networking / Security",category:"ARP / Neighbors",mode:"Shell",command:"arp -a",description:"Displays the ARP cache in legacy net-tools format.",example:"arp -a"},
+  {device:"Networking / Security",category:"ARP / Neighbors",mode:"Shell",command:"ip neigh flush all",description:"Clears the kernel neighbor (ARP/NDP) cache.",example:"sudo ip neigh flush all"},
+
+  {device:"Networking / Security",category:"Wireless",mode:"Shell",command:"iw dev",description:"Lists wireless interfaces and their operating mode.",example:"iw dev"},
+  {device:"Networking / Security",category:"Wireless",mode:"Shell",command:"iw dev <iface> link",description:"Shows current wireless association details (SSID, signal, bitrate).",example:"iw dev wlan0 link"},
+  {device:"Networking / Security",category:"Wireless",mode:"Shell",command:"iwlist <iface> scan",description:"Scans for nearby wireless networks.",example:"sudo iwlist wlan0 scan"},
+
+  {device:"Networking / Security",category:"VPN / Tunnels",mode:"Shell",command:"wg show",description:"Shows WireGuard interface status, peers, and handshakes.",example:"sudo wg show"},
+  {device:"Networking / Security",category:"VPN / Tunnels",mode:"Shell",command:"wg-quick up <conf>",description:"Brings up a WireGuard tunnel from a configuration file.",example:"sudo wg-quick up wg0"},
+  {device:"Networking / Security",category:"VPN / Tunnels",mode:"Shell",command:"openvpn --config <file>",description:"Establishes an OpenVPN tunnel using a client configuration.",example:"sudo openvpn --config client.ovpn"},
+  {device:"Networking / Security",category:"VPN / Tunnels",mode:"Shell",command:"ip tunnel show",description:"Lists configured IP tunnel interfaces (GRE/IPIP).",example:"ip tunnel show"},
+
+  {device:"Networking / Security",category:"Namespaces",mode:"Shell",command:"ip netns list",description:"Lists network namespaces on the host.",example:"ip netns list"},
+  {device:"Networking / Security",category:"Namespaces",mode:"Shell",command:"ip netns exec <ns> <cmd>",description:"Runs a command inside a specific network namespace.",example:"sudo ip netns exec ns1 ip addr"},
+  {device:"Networking / Security",category:"Namespaces",mode:"Shell",command:"ip netns add <ns>",description:"Creates a new isolated network namespace.",example:"sudo ip netns add ns1"},
+
+  {device:"Networking / Security",category:"Capture",mode:"Shell",command:"tcpdump -i <iface>",description:"Captures live packets on an interface.",example:"sudo tcpdump -i eth0 -n"},
+  {device:"Networking / Security",category:"Capture",mode:"Shell",command:"tcpdump -i <iface> port <port>",description:"Captures traffic filtered to a specific port.",example:"sudo tcpdump -i eth0 port 443 -n"},
+  {device:"Networking / Security",category:"Capture",mode:"Shell",command:"tcpdump -i <iface> -w <file>.pcap",description:"Captures packets to a file for later analysis in Wireshark.",example:"sudo tcpdump -i eth0 -w capture.pcap"},
+  {device:"Networking / Security",category:"Capture",mode:"Shell",command:"tshark -i <iface>",description:"Captures and decodes packets from the CLI using the Wireshark engine.",example:"sudo tshark -i eth0"},
+
+  {device:"Networking / Security",category:"Bandwidth",mode:"Shell",command:"iftop -i <iface>",description:"Shows real-time bandwidth usage per connection on an interface.",example:"sudo iftop -i eth0"},
+  {device:"Networking / Security",category:"Bandwidth",mode:"Shell",command:"nload <iface>",description:"Displays real-time incoming/outgoing traffic graphs for an interface.",example:"nload eth0"},
+  {device:"Networking / Security",category:"Bandwidth",mode:"Shell",command:"nethogs <iface>",description:"Shows bandwidth usage grouped by process.",example:"sudo nethogs eth0"},
+  {device:"Networking / Security",category:"Bandwidth",mode:"Shell",command:"iperf3 -c <host>",description:"Runs an active TCP/UDP throughput test against an iperf3 server.",example:"iperf3 -c 10.0.0.5"},
+  {device:"Networking / Security",category:"Bandwidth",mode:"Shell",command:"iperf3 -s",description:"Starts an iperf3 server to accept throughput test connections.",example:"iperf3 -s"},
+
+  {device:"Networking / Security",category:"NetworkManager",mode:"Shell",command:"nmcli device status",description:"Shows NetworkManager-managed device states.",example:"nmcli device status"},
+  {device:"Networking / Security",category:"NetworkManager",mode:"Shell",command:"nmcli connection show",description:"Lists configured NetworkManager connection profiles.",example:"nmcli connection show"},
+  {device:"Networking / Security",category:"NetworkManager",mode:"Shell",command:"nmcli connection up <name>",description:"Activates a NetworkManager connection profile.",example:"nmcli connection up eth0-static"},
+  {device:"Networking / Security",category:"NetworkManager",mode:"Shell",command:"nmcli device wifi list",description:"Lists visible Wi-Fi networks via NetworkManager.",example:"nmcli device wifi list"},
+
+  {device:"Networking / Security",category:"HTTP / Transfer",mode:"Shell",command:"curl -v <url>",description:"Makes an HTTP request with verbose connection and header detail.",example:"curl -v https://example.com"},
+  {device:"Networking / Security",category:"HTTP / Transfer",mode:"Shell",command:"curl -o <file> <url>",description:"Downloads a remote file over HTTP/HTTPS.",example:"curl -o app.tar.gz https://example.com/app.tar.gz"},
+  {device:"Networking / Security",category:"HTTP / Transfer",mode:"Shell",command:"curl -I <url>",description:"Fetches only response headers to check status and server info.",example:"curl -I https://example.com"},
+  {device:"Networking / Security",category:"HTTP / Transfer",mode:"Shell",command:"wget <url>",description:"Downloads a file or resource over HTTP/HTTPS/FTP.",example:"wget https://example.com/file.tar.gz"},
+  {device:"Networking / Security",category:"HTTP / Transfer",mode:"Shell",command:"scp <src> <user>@<host>:<dest>",description:"Securely copies a file to a remote host over SSH.",example:"scp app.tar.gz deploy@10.0.0.5:/opt/app/"},
+  {device:"Networking / Security",category:"HTTP / Transfer",mode:"Shell",command:"rsync -avz <src> <user>@<host>:<dest>",description:"Efficiently synchronizes files to a remote host, transferring only changes.",example:"rsync -avz ./build/ deploy@10.0.0.5:/var/www/app/"},
+
+  {device:"Networking / Security",category:"SSH",mode:"Shell",command:"ssh <user>@<host>",description:"Opens a secure shell session to a remote host.",example:"ssh admin@10.0.0.5"},
+  {device:"Networking / Security",category:"SSH",mode:"Shell",command:"ssh -L <lport>:<dst>:<dport> <user>@<host>",description:"Creates a local port-forwarding SSH tunnel.",example:"ssh -L 8080:localhost:80 admin@10.0.0.5"},
+  {device:"Networking / Security",category:"SSH",mode:"Shell",command:"ssh -D <port> <user>@<host>",description:"Starts a SOCKS proxy tunnel over SSH.",example:"ssh -D 1080 admin@10.0.0.5"},
+  {device:"Networking / Security",category:"SSH",mode:"Shell",command:"ssh-keygen -t ed25519 -C \"<comment>\"",description:"Generates a new SSH keypair using the ed25519 algorithm.",example:"ssh-keygen -t ed25519 -C \"deploy-key\""},
+  {device:"Networking / Security",category:"SSH",mode:"Shell",command:"ssh-copy-id <user>@<host>",description:"Installs a local public key into a remote host's authorized_keys.",example:"ssh-copy-id admin@10.0.0.5"},
+
+  {device:"Networking / Security",category:"Hostname / DHCP",mode:"Shell",command:"hostnamectl",description:"Shows and manages system hostname and related metadata.",example:"hostnamectl"},
+  {device:"Networking / Security",category:"Hostname / DHCP",mode:"Shell",command:"dhclient -v <iface>",description:"Requests a DHCP lease on an interface with verbose output.",example:"sudo dhclient -v eth0"},
+  {device:"Networking / Security",category:"Hostname / DHCP",mode:"Shell",command:"cat /var/lib/dhcp/dhclient.leases",description:"Displays current DHCP client lease information.",example:"cat /var/lib/dhcp/dhclient.leases"}
+];
+
+const EXTRA_COMMANDS = [];
+["nginx","sshd","docker","containerd","kubelet","chronyd","rsyslog","postfix","fail2ban","auditd"].forEach(svc => {
+  EXTRA_COMMANDS.push({device:"Storage / Services",category:"Services",mode:"Shell",command:`systemctl status ${svc}`,description:"Checks systemd service state and recent logs.",example:`systemctl status ${svc}`});
+});
+["/var/log/syslog","/var/log/messages","/var/log/auth.log","/var/log/kern.log","/var/log/nginx/error.log","/var/log/nginx/access.log","/var/log/secure","/var/log/audit/audit.log"].forEach(log => {
+  EXTRA_COMMANDS.push({device:"Linux System",category:"Troubleshooting",mode:"Shell",command:`tail -n 100 ${log}`,description:"Reads recent log entries for fault analysis.",example:`tail -n 100 ${log}`});
+});
+["22","80","443","3306","5432","6379","8080","8443"].forEach(port => {
+  EXTRA_COMMANDS.push({device:"Networking / Security",category:"Sockets",mode:"Shell",command:`ss -tulpen | grep :${port}`,description:"Checks listeners and owning process on target port.",example:`ss -tulpen | grep :${port}`});
+});
+["/etc/ssh/sshd_config","/etc/sysctl.conf","/etc/fstab","/etc/hosts","/etc/resolv.conf","/etc/sudoers","/etc/crontab","/etc/nginx/nginx.conf"].forEach(file => {
+  EXTRA_COMMANDS.push({device:"DevOps / Automation",category:"Config",mode:"Shell",command:`sudo vim ${file}`,description:"Edits key system configuration file.",example:`sudo vim ${file}`});
+});
+["vm.swappiness=10","net.ipv4.ip_forward=1","fs.file-max=2097152","net.core.somaxconn=65535","net.ipv4.tcp_tw_reuse=1","kernel.pid_max=4194303","net.ipv4.tcp_fin_timeout=15","vm.max_map_count=262144"].forEach(tune => {
+  EXTRA_COMMANDS.push({device:"Linux System",category:"Advanced",mode:"Shell",command:`sudo sysctl -w ${tune}`,description:"Applies runtime kernel tuning parameter.",example:`sudo sysctl -w ${tune}`});
+});
+["A","AAAA","MX","TXT","NS","CNAME","SOA","PTR"].forEach(rtype => {
+  EXTRA_COMMANDS.push({device:"Networking / Security",category:"DNS",mode:"Shell",command:`dig <host> ${rtype}`,description:`Queries the ${rtype} record type for a domain.`,example:`dig example.com ${rtype}`});
+});
+["eth0","eth1","ens160","ens192","bond0","lo","docker0","cni0"].forEach(ifn => {
+  EXTRA_COMMANDS.push({device:"Networking / Security",category:"Interfaces",mode:"Shell",command:`ip link show ${ifn}`,description:"Shows link-layer state and counters for a specific interface.",example:`ip link show ${ifn}`});
+});
+["22","53","80","443","3389","8080"].forEach(port => {
+  EXTRA_COMMANDS.push({device:"Networking / Security",category:"Firewall",mode:"Shell",command:`sudo iptables -A INPUT -p tcp --dport ${port} -j DROP`,description:"Blocks inbound TCP traffic on a specific port.",example:`sudo iptables -A INPUT -p tcp --dport ${port} -j DROP`});
+});
+
+const BULK_PACK = [];
+["/","/var","/home","/tmp","/opt","/srv","/boot","/usr"].forEach(path => {
+  BULK_PACK.push({device:"Storage / Services",category:"Storage",mode:"Shell",command:`df -h ${path}`,description:"Shows filesystem utilization for target mount path.",example:`df -h ${path}`});
+});
+["10.10.10.10","10.10.10.11","8.8.8.8","1.1.1.1","192.168.1.1","172.16.0.1","api.github.com","metadata.google.internal"].forEach(host => {
+  BULK_PACK.push({device:"Networking / Security",category:"Routing",mode:"Shell",command:`ping -c 4 ${host}`,description:"Tests ICMP reachability and latency.",example:`ping -c 4 ${host}`});
+});
+["10.10.10.10","8.8.8.8","1.1.1.1","192.168.1.1","172.16.0.1","api.github.com"].forEach(host => {
+  BULK_PACK.push({device:"Networking / Security",category:"Routing",mode:"Shell",command:`mtr -r -c 5 ${host}`,description:"Runs a report-mode combined ping/traceroute path test.",example:`mtr -r -c 5 ${host}`});
+});
+["eth0","eth1","ens160","ens192","bond0","lo","docker0","cni0"].forEach(ifn => {
+  BULK_PACK.push({device:"Networking / Security",category:"Interfaces",mode:"Shell",command:`ethtool ${ifn}`,description:"Displays NIC link speed/duplex/offload settings.",example:`ethtool ${ifn}`});
+});
+["INPUT","OUTPUT","FORWARD","PREROUTING","POSTROUTING"].forEach(chain => {
+  BULK_PACK.push({device:"Networking / Security",category:"Firewall",mode:"Shell",command:`iptables -L ${chain} -n -v --line-numbers`,description:`Lists numbered rules in the ${chain} chain for targeted edits.`,example:`sudo iptables -L ${chain} -n -v --line-numbers`});
+});
+["docker ps -a","docker images","kubectl get pods -A","journalctl -xe","dmesg -T | tail -n 100","sar -u 1 5","iostat -xz 1 5","vmstat 1 10","lsof -i -P -n","strace -p <pid>"].forEach(cmd => {
+  BULK_PACK.push({device:"DevOps / Automation",category:"Troubleshooting",mode:"Shell",command:cmd,description:"Expert diagnostic command for runtime investigation.",example:cmd});
+});
+
+DATA.push(...EXTRA_COMMANDS, ...BULK_PACK);
+
+const DEVICE_COLORS = {
+  "Linux System":"var(--d1)",
+  "Networking / Security":"var(--d2)",
+  "Storage / Services":"var(--d3)",
+  "DevOps / Automation":"var(--d4)"
+};
+
+const rowsEl = document.getElementById('rows');
+const searchEl = document.getElementById('search');
+const emptyState = document.getElementById('emptyState');
+const countLine = document.getElementById('countLine');
+const categorySelect = document.getElementById('category');
+const deviceFilters = document.getElementById('deviceFilters');
+const resetFiltersBtn = document.getElementById('resetFilters');
+
+let activeDevices = new Set();
+let activeCategory = "";
+
+const devices = [...new Set(DATA.map(d => d.device))];
+devices.forEach(dev => {
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.dataset.device = dev;
+  chip.innerHTML = `<span class="swatch" style="color:${DEVICE_COLORS[dev]}"></span>${dev}`;
+  chip.addEventListener('click', () => {
+    if (activeDevices.has(dev)) activeDevices.delete(dev); else activeDevices.add(dev);
+    chip.classList.toggle('active');
+    render();
+  });
+  deviceFilters.insertBefore(chip, categorySelect);
+});
+
+[...new Set(DATA.map(d => d.category))].sort().forEach(cat => {
+  const opt = document.createElement('option');
+  opt.value = cat;
+  opt.textContent = cat;
+  categorySelect.appendChild(opt);
+});
+
+categorySelect.addEventListener('change', () => { activeCategory = categorySelect.value; render(); });
+resetFiltersBtn.addEventListener('click', () => {
+  searchEl.value = '';
+  activeDevices.clear();
+  activeCategory = '';
+  categorySelect.value = '';
+  deviceFilters.querySelectorAll('.chip[data-device]').forEach(chip => chip.classList.remove('active'));
+  render();
+});
+
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function highlight(text,q){if(!q)return escapeHtml(text);const i=text.toLowerCase().indexOf(q.toLowerCase());if(i===-1)return escapeHtml(text);return escapeHtml(text.slice(0,i))+'<mark>'+escapeHtml(text.slice(i,i+q.length))+'</mark>'+escapeHtml(text.slice(i+q.length));}
+
+function render(){
+  const q = searchEl.value.trim().toLowerCase();
+  const filtered = DATA.filter(d => {
+    if (activeDevices.size && !activeDevices.has(d.device)) return false;
+    if (activeCategory && d.category !== activeCategory) return false;
+    if (!q) return true;
+    return (d.device+' '+d.category+' '+d.mode+' '+d.command+' '+d.description+' '+d.example).toLowerCase().includes(q);
+  });
+
+  rowsEl.innerHTML = filtered.map(d => `
+    <tr>
+      <td class="device" style="--tag-color:${DEVICE_COLORS[d.device]}"><span class="tag" style="--tag-color:${DEVICE_COLORS[d.device]}">${d.device}</span></td>
+      <td class="category">${highlight(d.category,q)}</td>
+      <td class="mode">${escapeHtml(d.mode)}</td>
+      <td class="command"><button class="cmd-btn" onclick="copyCmd(this)" data-cmd="${escapeHtml(d.command)}">${highlight(d.command,q)}<span class="copy-icon">[]</span></button></td>
+      <td class="desc">${highlight(d.description,q)}</td>
+      <td class="example">${highlight(d.example,q)}</td>
+    </tr>`).join('');
+
+  emptyState.style.display = filtered.length ? 'none' : 'block';
+  countLine.innerHTML = `<b>${filtered.length}</b> / ${DATA.length} commands`;
+}
+
+function copyCmd(btn){
+  const cmd = btn.getAttribute('data-cmd');
+  navigator.clipboard.writeText(cmd).then(() => {
+    const toast = document.getElementById('toast');
+    toast.textContent = `Copied: ${cmd}`;
+    toast.classList.add('show');
+    clearTimeout(window._t);
+    window._t = setTimeout(() => toast.classList.remove('show'), 1600);
+  });
+}
+
+searchEl.addEventListener('input', render);
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && document.activeElement !== searchEl) { e.preventDefault(); searchEl.focus(); }
+  if (e.key === 'Escape') { searchEl.value = ''; render(); }
+});
+render();
+</script>
+</body>
+</html>

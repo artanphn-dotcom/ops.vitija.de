@@ -1,0 +1,426 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiGate CLI Command Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a140d;
+    --bg-raised:#0f1f16;
+    --panel:#0d1b12;
+    --border:#1e3627;
+    --border-soft:#172b1e;
+    --text:#e9f0f8;
+    --text-dim:#95a8bd;
+    --text-faint:#607086;
+    --signal:#4ade80;
+    --signal-rgb:74,222,128;
+    --d1:#e0665a;
+    --d2:#5b9dd9;
+    --d3:#c589e8;
+    --d4:#f0a742;
+    --mono:'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius:10px;
+    --ease:cubic-bezier(.4,0,.2,1);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{margin:0;padding:0;}
+  ::selection{background:rgba(var(--signal-rgb),.32);color:#fff;}
+
+  body{
+    background:
+      radial-gradient(ellipse 1000px 520px at 12% -12%, rgba(var(--signal-rgb),0.10), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 100% 0%, rgba(var(--signal-rgb),0.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    line-height:1.5;
+  }
+
+  a{color:var(--signal);}
+
+  /* focus accessibility */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, .chip:focus-visible{
+    outline:2px solid var(--signal);
+    outline-offset:2px;
+    border-radius:4px;
+  }
+
+  /* ---------- Title bar ---------- */
+  .titlebar{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 22px;
+    background:rgba(10,14,20,0.72);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:30;
+  }
+  .dots{display:flex;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;opacity:.9;}
+  .dot.r{background:#e0665a;}.dot.y{background:#e4b45a;}.dot.g{background:#5ec78b;}
+  .titlebar .path{font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-left:6px;letter-spacing:.01em;}
+  .titlebar .path b{color:var(--signal);font-weight:500;}
+  .menu-btn{
+    margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--text);text-decoration:none;
+    border:1px solid var(--border);background:var(--panel);padding:6px 12px;border-radius:7px;
+    transition:border-color .18s var(--ease), background .18s var(--ease), transform .18s var(--ease), color .18s var(--ease);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .menu-btn::before{content:"←";opacity:.6;transition:transform .18s var(--ease);}
+  .menu-btn:hover{border-color:var(--signal);color:var(--signal);background:var(--bg-raised);}
+  .menu-btn:hover::before{transform:translateX(-2px);}
+
+  /* ---------- Hero ---------- */
+  header.hero{max-width:1720px;margin:0 auto;padding:40px 24px 20px;}
+  .eyebrow{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--signal);
+    text-transform:uppercase;margin:0 0 12px;display:flex;align-items:center;gap:8px;font-weight:600;
+  }
+  .eyebrow::before{content:"";width:7px;height:7px;background:var(--signal);border-radius:50%;box-shadow:0 0 10px 1px rgba(var(--signal-rgb),.8);}
+  h1{font-weight:700;font-size:clamp(26px,3.6vw,38px);margin:0 0 10px;letter-spacing:-0.015em;line-height:1.15;}
+  header.hero p.sub{color:var(--text-dim);font-size:15px;max-width:820px;line-height:1.6;margin:0;}
+
+  /* ---------- Controls ---------- */
+  .controls{
+    max-width:1720px;margin:0 auto;padding:0 24px 16px;
+    position:sticky;top:45px;z-index:20;
+    background:linear-gradient(var(--bg) 78%, transparent);
+    padding-top:6px;
+  }
+  .search-wrap{
+    display:flex;align-items:center;background:var(--panel);border:1px solid var(--border);
+    border-radius:var(--radius);padding:0 8px 0 16px;font-family:var(--mono);
+    transition:border-color .18s var(--ease), box-shadow .18s var(--ease);
+  }
+  .search-wrap:focus-within{border-color:var(--signal);box-shadow:0 0 0 3px rgba(var(--signal-rgb),0.15);}
+  .prompt{color:var(--signal);font-weight:600;font-size:14px;white-space:nowrap;}
+  #search{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:14px;padding:13px 10px;}
+  #search::placeholder{color:var(--text-faint);}
+  kbd{font-family:var(--mono);font-size:11px;color:var(--text-dim);border:1px solid var(--border-soft);background:var(--bg-raised);border-radius:5px;padding:3px 7px;margin-left:auto;}
+
+  .filters-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;}
+  .chip{
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:6.5px 14px;cursor:pointer;
+    display:flex;align-items:center;gap:7px;user-select:none;
+    transition:border-color .16s var(--ease), color .16s var(--ease), background .16s var(--ease), transform .12s var(--ease);
+  }
+  .chip:hover{border-color:var(--border-soft);color:var(--text);transform:translateY(-1px);}
+  .chip:active{transform:translateY(0);}
+  .chip .swatch{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .chip.active{color:var(--bg);background:var(--chip-color,var(--signal));border-color:var(--chip-color,var(--signal));font-weight:600;}
+  .reset-chip{margin-left:auto;}
+
+  select#category{
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:6.5px 30px 6.5px 14px;cursor:pointer;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0 L5 6 L10 0 Z' fill='%2395a8bd'/></svg>");
+    background-repeat:no-repeat;background-position:right 13px center;
+    transition:border-color .16s var(--ease);
+  }
+  select#category:hover{border-color:var(--border-soft);}
+  .count-line{font-family:var(--mono);font-size:12px;color:var(--text-faint);margin-left:4px;}
+
+  /* ---------- Table ---------- */
+  main{max-width:1720px;margin:0 auto;padding:6px 24px 54px;}
+  .table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--panel);}
+  .table-wrap > table{display:block;overflow:auto;max-height:none;}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  thead th{
+    text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--text-dim);font-weight:600;background:var(--bg-raised);padding:12px 16px;
+    border-bottom:1px solid var(--border);position:sticky;top:0;
+  }
+  tbody tr{border-bottom:1px solid var(--border-soft);transition:background .12s var(--ease);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:rgba(var(--signal-rgb),0.055);}
+  td{padding:13px 16px;vertical-align:top;font-size:13px;line-height:1.55;}
+  td.device{white-space:nowrap;border-left:3px solid var(--tag-color);}
+  .tag{
+    font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.02em;color:var(--tag-color);
+    background:color-mix(in srgb, var(--tag-color) 14%, transparent);
+    border:1px solid color-mix(in srgb, var(--tag-color) 38%, transparent);
+    padding:3.5px 9px;border-radius:5px;white-space:nowrap;display:inline-block;
+  }
+  td.category{color:var(--text-dim);font-size:13px;white-space:nowrap;}
+  td.mode{color:var(--text-faint);font-size:11.5px;font-family:var(--mono);white-space:nowrap;text-transform:uppercase;letter-spacing:.03em;}
+  td.command{font-family:var(--mono);white-space:normal;overflow-wrap:anywhere;}
+  td.desc{color:#eef4fb;white-space:normal;overflow-wrap:anywhere;}
+  td.example{font-family:var(--mono);color:var(--text-dim);font-size:12px;white-space:normal;overflow-wrap:anywhere;}
+  mark{background:rgba(var(--signal-rgb),.32);color:#fff;border-radius:2px;padding:0 1px;}
+  .cmd-btn{
+    background:none;border:none;padding:2px 0;color:var(--signal);font-family:var(--mono);font-size:13px;
+    cursor:pointer;text-align:left;display:inline-flex;align-items:center;gap:8px;border-radius:4px;
+  }
+  .cmd-btn:hover{text-decoration:underline;}
+  .copy-icon{opacity:.45;font-size:11px;transition:opacity .16s var(--ease);}
+  .cmd-btn:hover .copy-icon{opacity:.9;}
+
+  .empty{text-align:center;padding:70px 20px;color:var(--text-dim);font-family:var(--mono);font-size:13px;}
+
+  /* ---------- Examples ---------- */
+  .examples{max-width:1720px;margin:26px auto 10px;padding:0 24px;}
+  .examples h2{margin:0 0 8px;font-size:19px;letter-spacing:-0.01em;}
+  .examples p{margin:0 0 16px;color:var(--text-dim);font-size:14px;}
+  .example-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;}
+  .example-card{
+    border:1px solid var(--border);background:var(--panel);border-radius:var(--radius);padding:14px 16px;
+    transition:border-color .18s var(--ease), transform .18s var(--ease);
+  }
+  .example-card:hover{border-color:var(--border-soft);transform:translateY(-2px);}
+  .example-card h3{margin:0 0 10px;font-size:12.5px;font-family:var(--mono);color:var(--signal);letter-spacing:.02em;text-transform:uppercase;}
+  .example-card pre{margin:0;white-space:pre-wrap;font-family:var(--mono);font-size:12px;color:var(--text-dim);line-height:1.55;}
+
+  /* ---------- Toast & footer ---------- */
+  .toast{
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(14px);
+    background:var(--signal);color:#0a0e14;font-family:var(--mono);font-weight:700;font-size:13px;
+    padding:11px 20px;border-radius:9px;opacity:0;pointer-events:none;
+    transition:opacity .2s var(--ease), transform .2s var(--ease);z-index:50;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  footer{text-align:center;color:var(--text-faint);font-family:var(--mono);font-size:11.5px;padding:20px 24px 40px;border-top:1px solid var(--border-soft);margin-top:10px;max-width:1720px;margin-left:auto;margin-right:auto;}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none!important;}
+  }
+
+  @media (max-width:900px){
+    .controls{position:static;}
+    thead{display:none;}
+    table,tbody,tr,td{display:block;width:100%;}
+    tbody tr{padding:14px 16px 16px;position:relative;}
+    td{padding:3px 0;border:none!important;}
+    td.device{border-left:none;padding-bottom:8px;}
+    td.category, td.mode{display:inline-block;margin-right:10px;}
+    td.command{margin:6px 0 4px;}
+    td.example{margin-top:6px;padding:9px 11px;background:var(--bg-raised);border-radius:7px;}
+  }
+
+  @media (max-width:560px){
+    header.hero{padding:28px 16px 16px;}
+    .controls{padding:0 16px 14px;}
+    main{padding:6px 16px 40px;}
+    .examples{padding:0 16px;}
+    .filters-row{gap:6px;}
+    .reset-chip{margin-left:0;}
+  }
+
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+  <span class="path">admin@FGT-EDGE-01:<b>~/cli-reference</b>$</span>
+  <a class="menu-btn" href="index.html">Back to Menu</a>
+</div>
+
+<header class="hero">
+  <p class="eyebrow">179 commands · 4 platforms</p>
+  <h1>FortiGate CLI Command Reference</h1>
+  <p class="sub">A searchable field manual for FortiGate NGFW, FortiSwitch, FortiAP, and FortiManager syntax â€” from firewall policy and SD-WAN through IPsec VPN, FGCP clustering, RRM wireless profiles, and centralized management. Click any command to copy it.</p>
+</header>
+
+<div class="controls">
+  <div class="search-wrap">
+    <span class="prompt">&gt;</span>
+    <input id="search" type="text" placeholder="search commands, descriptions, categoriesâ€¦" autocomplete="off" spellcheck="false">
+    <kbd>/</kbd>
+  </div>
+  <div class="filters-row" id="deviceFilters">
+    <select id="category"><option value="">All categories</option></select>
+    <span class="count-line" id="countLine"></span>
+    <button class="chip reset-chip" id="resetFilters" type="button">Show All</button>
+  </div>
+</div>
+
+<main>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:12%">Device</th>
+          <th style="width:10%">Category</th>
+          <th style="width:9%">Mode</th>
+          <th style="width:20%">Command</th>
+          <th style="width:31%">Description</th>
+          <th style="width:18%">Example</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="emptyState" style="display:none;">No commands match your search â€” try a different term.</div>
+  </div>
+</main>
+
+<section class="examples">
+  <h2>Configuration and Output Examples</h2>
+  <p>Quick validation examples for SD-WAN and security operations.</p>
+  <div class="example-grid">
+    <article class="example-card">
+      <h3>SD-WAN Rule Example</h3>
+      <pre>config system sdwan
+  config service
+    edit 1
+      set name "VOICE-PATH"
+      set priority-members 1 2
+    next
+  end
+end</pre>
+    </article>
+    <article class="example-card">
+      <h3>Troubleshooting Output</h3>
+      <pre># diagnose sys top 1 10
+Run Time: 2 days, 4 hours
+PID   RSS   CPU%  MEM%  NAME
+84    2.1%  12.4  2.1   ipsengine
+
+# get router info routing-table all</pre>
+    </article>
+  </div>
+</section>
+
+<footer>FortiGate CLI Command Reference · offline, static, single file · Copyright Artan V.</footer>
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+const DATA = [["FortiGate (NGFW)", "System", "Global Config", "config system global", "Enters global system configuration for hostname, admin timeout, and other device-wide settings", "config system global"], ["FortiGate (NGFW)", "System", "Global Config", "set hostname [name]", "Sets the device hostname shown in the CLI prompt and GUI", "set hostname FGT-EDGE-01"], ["FortiGate (NGFW)", "System", "Global Config", "config system admin", "Enters administrator account configuration mode", "config system admin"], ["FortiGate (NGFW)", "System", "Admin Config", "set accprofile [profile]", "Assigns an access profile controlling admin privilege level", "set accprofile super_admin"], ["FortiGate (NGFW)", "System", "Admin Config", "set trusthost1 [ip] [mask]", "Restricts admin login to a trusted source subnet", "set trusthost1 10.1.1.0 255.255.255.0"], ["FortiGate (NGFW)", "Interfaces", "Interface Config", "config system interface", "Enters interface configuration mode", "config system interface"], ["FortiGate (NGFW)", "Interfaces", "Interface Object", "edit [interface-name]", "Selects or creates an interface entry to edit", "edit \"port1\""], ["FortiGate (NGFW)", "Interfaces", "Interface Object", "set ip [ip-address] [subnet-mask]", "Assigns an IP address and netmask to the interface", "set ip 10.1.1.1 255.255.255.0"], ["FortiGate (NGFW)", "Interfaces", "Interface Object", "set allowaccess [services]", "Defines which management protocols are allowed on the interface", "set allowaccess ping https ssh"], ["FortiGate (NGFW)", "Interfaces", "Interface Object", "set alias [text]", "Adds a descriptive alias label to an interface", "set alias WAN-LINK"], ["FortiGate (NGFW)", "Interfaces", "Interface Object", "set role [wan lan dmz undefined]", "Assigns a functional role to an interface", "set role wan"], ["FortiGate (NGFW)", "Interfaces", "Interface Object", "next", "Saves the current object entry and returns to the object list", "next"], ["FortiGate (NGFW)", "Interfaces", "Global Config", "end", "Commits changes and exits the current configuration block", "end"], ["FortiGate (NGFW)", "VLANs", "Interface Config", "set vlanid [id]", "Assigns an 802.1Q VLAN ID to a VLAN sub-interface", "set vlanid 10"], ["FortiGate (NGFW)", "VLANs", "Interface Config", "set interface [physical-port]", "Sets the parent physical interface for a VLAN sub-interface", "set interface \"port1\""], ["FortiGate (NGFW)", "Address Objects", "Global Config", "config firewall address", "Enters firewall address object configuration mode", "config firewall address"], ["FortiGate (NGFW)", "Address Objects", "Address Config", "set subnet [network] [mask]", "Defines the IP subnet represented by an address object", "set subnet 10.1.1.0 255.255.255.0"], ["FortiGate (NGFW)", "Address Objects", "Global Config", "config firewall addrgrp", "Enters address group configuration mode for grouping objects", "config firewall addrgrp"], ["FortiGate (NGFW)", "Address Objects", "Addrgrp Config", "set member [address-list]", "Adds address objects as members of an address group", "set member \"INSIDE-NET\" \"DMZ-NET\""], ["FortiGate (NGFW)", "Firewall Policy", "Global Config", "config firewall policy", "Enters firewall security policy configuration mode", "config firewall policy"], ["FortiGate (NGFW)", "Firewall Policy", "Policy Config", "set srcintf [interface]", "Sets the source (ingress) interface for the policy", "set srcintf \"port1\""], ["FortiGate (NGFW)", "Firewall Policy", "Policy Config", "set dstintf [interface]", "Sets the destination (egress) interface for the policy", "set dstintf \"port2\""], ["FortiGate (NGFW)", "Firewall Policy", "Policy Config", "set srcaddr [address-object]", "Sets the source address object matched by the policy", "set srcaddr \"INSIDE-NET\""], ["FortiGate (NGFW)", "Firewall Policy", "Policy Config", "set dstaddr [address-object]", "Sets the destination address object matched by the policy", "set dstaddr \"all\""], ["FortiGate (NGFW)", "Firewall Policy", "Policy Config", "set action [accept deny]", "Sets whether matching traffic is permitted or denied", "set action accept"], ["FortiGate (NGFW)", "Firewall Policy", "Policy Config", "set schedule [schedule-name]", "Sets the time schedule during which the policy is active", "set schedule \"always\""], ["FortiGate (NGFW)", "Firewall Policy", "Policy Config", "set service [service-object]", "Sets the service/port object matched by the policy", "set service \"HTTPS\""], ["FortiGate (NGFW)", "Firewall Policy", "Policy Config", "set nat enable", "Enables source NAT on the matching policy", "set nat enable"], ["FortiGate (NGFW)", "Firewall Policy", "Policy Config", "set logtraffic all", "Enables logging of all sessions matched by the policy", "set logtraffic all"], ["FortiGate (NGFW)", "Firewall Policy", "Privileged EXEC", "show firewall policy", "Displays the current firewall policy configuration", "show firewall policy"], ["FortiGate (NGFW)", "NAT", "Global Config", "config firewall vip", "Enters virtual IP configuration for destination NAT / port forwarding", "config firewall vip"], ["FortiGate (NGFW)", "NAT", "VIP Config", "set extip [ip-address]", "Sets the external IP address clients connect to for the VIP", "set extip 203.0.113.10"], ["FortiGate (NGFW)", "NAT", "VIP Config", "set mappedip [ip-address]", "Sets the internal IP address traffic is translated to", "set mappedip \"10.1.1.10\""], ["FortiGate (NGFW)", "NAT", "VIP Config", "set portforward enable", "Enables port-specific forwarding on the virtual IP", "set portforward enable"], ["FortiGate (NGFW)", "NAT", "VIP Config", "set extport [port-range]", "Sets the external port or port range for the VIP", "set extport 443"], ["FortiGate (NGFW)", "NAT", "VIP Config", "set mappedport [port-range]", "Sets the internal port the external port is translated to", "set mappedport 8443"], ["FortiGate (NGFW)", "Security Profiles", "Global Config", "config antivirus profile", "Enters antivirus profile configuration mode", "config antivirus profile"], ["FortiGate (NGFW)", "Security Profiles", "AV Profile Config", "set scan-mode [quick full]", "Sets the scanning depth used by the antivirus engine", "set scan-mode full"], ["FortiGate (NGFW)", "Security Profiles", "Global Config", "config webfilter profile", "Enters web filter profile configuration mode", "config webfilter profile"], ["FortiGate (NGFW)", "Security Profiles", "Global Config", "config ips sensor", "Enters IPS sensor profile configuration mode", "config ips sensor"], ["FortiGate (NGFW)", "Security Profiles", "IPS Sensor Config", "set status enable", "Enables the current IPS signature entry or profile", "set status enable"], ["FortiGate (NGFW)", "Security Profiles", "Global Config", "config application list", "Enters application control profile configuration mode", "config application list"], ["FortiGate (NGFW)", "Security Profiles", "Global Config", "config firewall ssl-ssh-profile", "Enters SSL/SSH deep inspection profile configuration", "config firewall ssl-ssh-profile"], ["FortiGate (NGFW)", "Routing", "Global Config", "config router static", "Enters static route configuration mode", "config router static"], ["FortiGate (NGFW)", "Routing", "Static Route Config", "set dst [network] [mask]", "Sets the destination network for a static route", "set dst 0.0.0.0 0.0.0.0"], ["FortiGate (NGFW)", "Routing", "Static Route Config", "set gateway [ip-address]", "Sets the next-hop gateway address for a static route", "set gateway 203.0.113.254"], ["FortiGate (NGFW)", "Routing", "Static Route Config", "set device [interface]", "Sets the egress interface used to reach the gateway", "set device \"port1\""], ["FortiGate (NGFW)", "Routing", "Global Config", "config router bgp", "Enters BGP routing configuration mode", "config router bgp"], ["FortiGate (NGFW)", "Routing", "BGP Config", "set as [as-number]", "Sets the local autonomous system number for BGP", "set as 65000"], ["FortiGate (NGFW)", "Routing", "BGP Config", "config neighbor", "Enters BGP neighbor configuration sub-mode", "config neighbor"], ["FortiGate (NGFW)", "Routing", "Neighbor Config", "set remote-as [as-number]", "Sets the remote AS number for a BGP neighbor", "set remote-as 65010"], ["FortiGate (NGFW)", "Routing", "Global Config", "config router ospf", "Enters OSPF routing configuration mode", "config router ospf"], ["FortiGate (NGFW)", "Routing", "OSPF Config", "set router-id [ip-address]", "Manually sets the OSPF router ID", "set router-id 1.1.1.1"], ["FortiGate (NGFW)", "Routing", "Privileged EXEC", "get router info routing-table all", "Displays the current unicast routing table", "get router info routing-table all"], ["FortiGate (NGFW)", "SD-WAN", "Global Config", "config system sdwan", "Enters SD-WAN configuration mode", "config system sdwan"], ["FortiGate (NGFW)", "SD-WAN", "SD-WAN Config", "config zone", "Defines an SD-WAN zone grouping member interfaces", "config zone"], ["FortiGate (NGFW)", "SD-WAN", "SD-WAN Config", "config members", "Adds WAN interfaces as members of the SD-WAN group", "config members"], ["FortiGate (NGFW)", "SD-WAN", "Member Config", "set interface [interface]", "Assigns a physical interface as an SD-WAN member", "set interface \"wan1\""], ["FortiGate (NGFW)", "SD-WAN", "SD-WAN Config", "config health-check", "Defines a health-check probe used for SD-WAN link monitoring", "config health-check"], ["FortiGate (NGFW)", "SD-WAN", "Health-Check Config", "set server [ip-address]", "Sets the probe target server for the health-check", "set server \"8.8.8.8\""], ["FortiGate (NGFW)", "SD-WAN", "Global Config", "config system sdwan", "Enters the SD-WAN rule (service) configuration for path selection", "config service"], ["FortiGate (NGFW)", "VPN", "Global Config", "config vpn ipsec phase1-interface", "Enters IPsec Phase 1 (IKE) configuration mode", "config vpn ipsec phase1-interface"], ["FortiGate (NGFW)", "VPN", "Phase1 Config", "set interface [interface]", "Sets the local outgoing interface for the IPsec tunnel", "set interface \"wan1\""], ["FortiGate (NGFW)", "VPN", "Phase1 Config", "set remote-gw [ip-address]", "Sets the remote peer gateway IP address", "set remote-gw 203.0.113.50"], ["FortiGate (NGFW)", "VPN", "Phase1 Config", "set psksecret [key]", "Sets the pre-shared key used for IKE authentication", "set psksecret CorpVpnKey123"], ["FortiGate (NGFW)", "VPN", "Global Config", "config vpn ipsec phase2-interface", "Enters IPsec Phase 2 configuration mode for traffic selectors", "config vpn ipsec phase2-interface"], ["FortiGate (NGFW)", "VPN", "Phase2 Config", "set phase1name [name]", "Associates the Phase 2 entry with a Phase 1 proposal", "set phase1name \"TO-BRANCH\""], ["FortiGate (NGFW)", "VPN", "Global Config", "config vpn ssl settings", "Enters SSL VPN gateway settings configuration", "config vpn ssl settings"], ["FortiGate (NGFW)", "VPN", "SSL VPN Config", "set servercert [certificate]", "Sets the certificate presented to SSL VPN clients", "set servercert \"Fortinet_Factory\""], ["FortiGate (NGFW)", "VPN", "Global Config", "config vpn ssl web portal", "Configures an SSL VPN web portal profile for remote users", "config vpn ssl web portal"], ["FortiGate (NGFW)", "High Availability", "Global Config", "config system ha", "Enters FortiGate Clustering Protocol (FGCP) HA configuration", "config system ha"], ["FortiGate (NGFW)", "High Availability", "HA Config", "set mode [a-a a-p standalone]", "Sets the HA operating mode of the cluster member", "set mode a-p"], ["FortiGate (NGFW)", "High Availability", "HA Config", "set group-id [id]", "Sets the HA cluster group ID shared by all members", "set group-id 10"], ["FortiGate (NGFW)", "High Availability", "HA Config", "set password [password]", "Sets the HA heartbeat authentication password", "set password CorpHaKey123"], ["FortiGate (NGFW)", "High Availability", "HA Config", "set priority [value]", "Sets the device priority used for primary unit election", "set priority 200"], ["FortiGate (NGFW)", "High Availability", "Privileged EXEC", "get system ha status", "Displays current HA cluster status and member roles", "get system ha status"], ["FortiGate (NGFW)", "High Availability", "Privileged EXEC", "diagnose sys ha status", "Displays low-level HA synchronization and heartbeat diagnostics", "diagnose sys ha status"], ["FortiGate (NGFW)", "User & Authentication", "Global Config", "config user local", "Enters local user account configuration mode", "config user local"], ["FortiGate (NGFW)", "User & Authentication", "User Config", "set type [password radius ldap]", "Sets the authentication method type for the local user", "set type password"], ["FortiGate (NGFW)", "User & Authentication", "User Config", "set passwd [password]", "Sets the password for a local firewall user", "set passwd CorpUserPass123"], ["FortiGate (NGFW)", "User & Authentication", "Global Config", "config user group", "Enters user group configuration mode", "config user group"], ["FortiGate (NGFW)", "User & Authentication", "Global Config", "config user radius", "Configures a RADIUS server for remote authentication", "config user radius"], ["FortiGate (NGFW)", "User & Authentication", "RADIUS Config", "set server [ip-address]", "Sets the RADIUS server IP address", "set server 10.1.1.90"], ["FortiGate (NGFW)", "VDOM", "Global Config", "config system global", "Enables virtual domain support at the system level", "set vdom-mode multi-vdom"], ["FortiGate (NGFW)", "VDOM", "Global Config", "config vdom", "Enters virtual domain (VDOM) creation and editing mode", "config vdom"], ["FortiGate (NGFW)", "VDOM", "VDOM Object", "edit [vdom-name]", "Creates or selects a VDOM to configure", "edit \"CUSTOMER-A\""], ["FortiGate (NGFW)", "VDOM", "Global Config", "config global", "Returns to global configuration scope from within a VDOM", "config global"], ["FortiGate (NGFW)", "Logging & Monitoring", "Global Config", "config log syslogd setting", "Enters remote syslog server configuration mode", "config log syslogd setting"], ["FortiGate (NGFW)", "Logging & Monitoring", "Syslog Config", "set server [ip-address]", "Sets the destination IP address for syslog messages", "set server 10.1.1.70"], ["FortiGate (NGFW)", "Logging & Monitoring", "Global Config", "config log fortianalyzer setting", "Configures logging to a FortiAnalyzer collector", "config log fortianalyzer setting"], ["FortiGate (NGFW)", "Logging & Monitoring", "FAZ Config", "set server [ip-address]", "Sets the FortiAnalyzer server IP address for log forwarding", "set server 10.1.1.80"], ["FortiGate (NGFW)", "Troubleshooting", "Privileged EXEC", "get system status", "Displays firmware version, serial number, and system status", "get system status"], ["FortiGate (NGFW)", "Troubleshooting", "Privileged EXEC", "get system performance status", "Displays real-time CPU, memory, and session load", "get system performance status"], ["FortiGate (NGFW)", "Troubleshooting", "Privileged EXEC", "diagnose sys top", "Displays a live process list similar to Linux top", "diagnose sys top"], ["FortiGate (NGFW)", "Troubleshooting", "Privileged EXEC", "diagnose debug flow filter addr [ip-address]", "Filters the debug flow trace to a specific IP address", "diagnose debug flow filter addr 10.1.1.5"], ["FortiGate (NGFW)", "Troubleshooting", "Privileged EXEC", "diagnose debug flow trace start [count]", "Starts a live packet flow trace for the configured filter", "diagnose debug flow trace start 20"], ["FortiGate (NGFW)", "Troubleshooting", "Privileged EXEC", "diagnose sys session list", "Displays all active firewall sessions in the session table", "diagnose sys session list"], ["FortiGate (NGFW)", "Troubleshooting", "Privileged EXEC", "execute ping [ip-address]", "Sends ICMP echo requests to test reachability", "execute ping 8.8.8.8"], ["FortiGate (NGFW)", "Troubleshooting", "Privileged EXEC", "execute traceroute [ip-address]", "Traces the network path to a destination host", "execute traceroute 8.8.8.8"], ["FortiGate (NGFW)", "Troubleshooting", "Privileged EXEC", "diagnose vpn ike gateway list", "Displays active IKE gateway state for IPsec tunnels", "diagnose vpn ike gateway list"], ["FortiGate (NGFW)", "Firmware & Backup", "Privileged EXEC", "execute backup config [destination]", "Backs up the current configuration to a destination such as USB or TFTP", "execute backup config tftp cfg.conf 10.1.1.70"], ["FortiGate (NGFW)", "Firmware & Backup", "Privileged EXEC", "execute restore config [destination]", "Restores a configuration file from a saved backup", "execute restore config tftp cfg.conf 10.1.1.70"], ["FortiGate (NGFW)", "Firmware & Backup", "Privileged EXEC", "execute reboot", "Reboots the FortiGate device", "execute reboot"], ["FortiSwitch", "Switch Controller", "Global Config", "config switch-controller managed-switch", "Enters managed FortiSwitch configuration from the FortiGate controller", "config switch-controller managed-switch"], ["FortiSwitch", "Switch Controller", "Managed Switch Config", "set fsw-wan1-peer [interface]", "Sets the FortiLink uplink interface connecting the switch to the FortiGate", "set fsw-wan1-peer \"port5\""], ["FortiSwitch", "Switch Controller", "Global Config", "config switch-controller vlan", "Defines a VLAN to be pushed to managed FortiSwitches", "config switch-controller vlan"], ["FortiSwitch", "Switch Controller", "Global Config", "config switch-controller lldp-profile", "Configures an LLDP profile applied to managed switch ports", "config switch-controller lldp-profile"], ["FortiSwitch", "Interfaces", "Port Config", "config switch-controller managed-switch", "Enters per-port configuration for a managed FortiSwitch", "config ports"], ["FortiSwitch", "Interfaces", "Port Config", "set vlan [vlan-name]", "Assigns a native VLAN to a managed FortiSwitch port", "set vlan \"SALES-VLAN\""], ["FortiSwitch", "Interfaces", "Port Config", "set allowed-vlans [vlan-list]", "Sets the tagged VLANs permitted on a trunked switch port", "set allowed-vlans \"SALES-VLAN\", \"VOICE-VLAN\""], ["FortiSwitch", "Interfaces", "Port Config", "set poe-status enable", "Enables Power over Ethernet on the managed switch port", "set poe-status enable"], ["FortiSwitch", "Security", "Port Config", "set port-security-policy [policy]", "Applies a MAC/802.1X port security policy to a switch port", "set port-security-policy \"CORP-802.1X\""], ["FortiSwitch", "Security", "Global Config", "config switch-controller security-policy 802-1X", "Defines an 802.1X port authentication policy", "config switch-controller security-policy 802-1X"], ["FortiSwitch", "High Availability", "Global Config", "config switch-controller switch-group", "Groups managed switches together for MCLAG or stacking", "config switch-controller switch-group"], ["FortiSwitch", "Troubleshooting", "Privileged EXEC", "get switch-controller managed-switch", "Displays status of all FortiSwitches managed by this FortiGate", "get switch-controller managed-switch"], ["FortiSwitch", "Troubleshooting", "Privileged EXEC", "diagnose switch-controller switch-info", "Displays detailed diagnostic information for managed switches", "diagnose switch-controller switch-info"], ["FortiAP", "Wireless Controller", "Global Config", "config wireless-controller vap", "Enters Virtual Access Point (SSID) profile configuration", "config wireless-controller vap"], ["FortiAP", "Wireless Controller", "VAP Config", "set ssid [name]", "Sets the broadcast SSID name for the virtual access point", "set ssid \"CORP-WIFI\""], ["FortiAP", "Wireless Controller", "VAP Config", "set security [wpa2-only-personal wpa2-only-enterprise]", "Sets the wireless security and authentication method", "set security wpa2-only-enterprise"], ["FortiAP", "Wireless Controller", "VAP Config", "set passphrase [key]", "Sets the pre-shared key for personal-mode WPA security", "set passphrase CorpWifiKey123"], ["FortiAP", "Wireless Controller", "Global Config", "config wireless-controller wtp-profile", "Enters FortiAP (WTP) hardware profile configuration", "config wireless-controller wtp-profile"], ["FortiAP", "Wireless Controller", "WTP Profile Config", "config radio-1", "Enters 2.4GHz radio configuration within a WTP profile", "config radio-1"], ["FortiAP", "Wireless Controller", "Radio Config", "set channel [channel-list]", "Sets the allowed operating channels for the radio", "set channel \"1\" \"6\" \"11\""], ["FortiAP", "Wireless Controller", "Global Config", "config wireless-controller wtp", "Registers and configures an individual FortiAP unit", "config wireless-controller wtp"], ["FortiAP", "Wireless Controller", "WTP Config", "set admin [discovered enable]", "Approves or authorizes a discovered access point to join", "set admin enable"], ["FortiAP", "Troubleshooting", "Privileged EXEC", "get wireless-controller status", "Displays status of all connected FortiAP units", "get wireless-controller status"], ["FortiAP", "Troubleshooting", "Privileged EXEC", "execute wireless-controller reset-wtp [wtp-id]", "Reboots a specific FortiAP unit from the controller", "execute wireless-controller reset-wtp FP221C-0001"], ["FortiAP", "Troubleshooting", "Privileged EXEC", "diagnose wireless-controller wlac -c stats", "Displays live wireless client statistics from the controller", "diagnose wireless-controller wlac -c stats"], ["FortiManager", "Central Management", "Global Config", "config device group", "Creates a device group used to organize managed FortiGates", "config device group"], ["FortiManager", "Central Management", "Global Config", "config device manager device", "Adds or edits a managed device entry", "config device manager device"], ["FortiManager", "Central Management", "Privileged EXEC", "execute device add [ip-address] [login] [password]", "Adds a new FortiGate device to FortiManager for management", "execute device add 10.1.1.5 admin CorpPass123"], ["FortiManager", "Central Management", "Global Config", "config adom", "Enters Administrative Domain configuration mode", "config adom"], ["FortiManager", "Central Management", "Privileged EXEC", "execute log fetch device [device-name]", "Manually fetches logs from a specific managed device", "execute log fetch device FGT-EDGE-01"], ["FortiManager", "Policy Packages", "Global Config", "config fmupdate", "Configures FortiGuard update server and package settings", "config fmupdate"], ["FortiManager", "Policy Packages", "Privileged EXEC", "execute workflow session create", "Initiates a workflow session for approval-based policy changes", "execute workflow session create"], ["FortiManager", "Troubleshooting", "Privileged EXEC", "get system status", "Displays FortiManager version and system status", "get system status"], ["FortiManager", "Troubleshooting", "Privileged EXEC", "diagnose dvm device list", "Lists all devices registered in the Device Manager database", "diagnose dvm device list"], ["FortiGate (NGFW)", "Advanced Routing", "Router Config", "set graceful-restart enable", "Enables BGP graceful restart to preserve forwarding during a control-plane restart", "set graceful-restart enable"], ["FortiGate (NGFW)", "Advanced Routing", "Neighbor Config", "set route-map-out [route-map]", "Applies an outbound route-map to filter or modify routes sent to a BGP neighbor", "set route-map-out FILTER-OUT"], ["FortiGate (NGFW)", "Advanced Routing", "Global Config", "config router route-map", "Defines a route-map used to filter or manipulate routing updates", "config router route-map"], ["FortiGate (NGFW)", "Advanced Routing", "Router Config", "set redistribute [protocol] status enable", "Redistributes routes from another protocol into the current routing protocol", "set redistribute \"static\" status enable"], ["FortiGate (NGFW)", "Advanced Routing", "Policy Route Config", "config router policy", "Enters policy-based routing configuration to override normal route lookups", "config router policy"], ["FortiGate (NGFW)", "Advanced Routing", "Policy Route Config", "set output-device [interface]", "Sets the egress interface used to forward traffic matched by a policy route", "set output-device \"wan2\""], ["FortiGate (NGFW)", "Advanced VPN", "Global Config", "config vpn ipsec forticlient", "Configures ADVPN hub-and-spoke auto-discovery IPsec settings", "config vpn ipsec phase1-interface"], ["FortiGate (NGFW)", "Advanced VPN", "Phase1 Config", "set auto-discovery-sender enable", "Enables this device to advertise shortcut routes as an ADVPN hub", "set auto-discovery-sender enable"], ["FortiGate (NGFW)", "Advanced VPN", "Phase1 Config", "set auto-discovery-receiver enable", "Enables this device to accept ADVPN shortcut advertisements as a spoke", "set auto-discovery-receiver enable"], ["FortiGate (NGFW)", "Advanced VPN", "Phase1 Config", "set dpd on-idle", "Enables Dead Peer Detection to tear down idle IKE SAs", "set dpd on-idle"], ["FortiGate (NGFW)", "Advanced VPN", "SSL VPN Config", "set tunnel-ip-pools [pool-name]", "Assigns the IP pool used to allocate addresses to SSL VPN tunnel clients", "set tunnel-ip-pools \"SSLVPN-POOL\""], ["FortiGate (NGFW)", "Advanced VPN", "SSL VPN Config", "set split-tunneling enable", "Enables split tunneling so only specified routes traverse the SSL VPN", "set split-tunneling enable"], ["FortiGate (NGFW)", "Traffic Shaping", "Global Config", "config firewall shaper traffic-shaper", "Defines a traffic shaper enforcing bandwidth limits on matched traffic", "config firewall shaper traffic-shaper"], ["FortiGate (NGFW)", "Traffic Shaping", "Shaper Config", "set maximum-bandwidth [kbps]", "Sets the maximum bandwidth allowed for traffic assigned to this shaper", "set maximum-bandwidth 10000"], ["FortiGate (NGFW)", "Traffic Shaping", "Policy Config", "set traffic-shaper [shaper-name]", "Applies a traffic shaper to a firewall policy for forward-direction traffic", "set traffic-shaper \"WAN-LIMIT\""], ["FortiGate (NGFW)", "Explicit Proxy", "Global Config", "config web-proxy explicit", "Enables and configures the explicit web proxy service", "config web-proxy explicit"], ["FortiGate (NGFW)", "Explicit Proxy", "Explicit Proxy Config", "set status enable", "Enables the explicit proxy listener on the FortiGate", "set status enable"], ["FortiGate (NGFW)", "DoS Protection", "Global Config", "config firewall DoS-policy", "Creates a DoS protection policy applying anomaly thresholds to traffic", "config firewall DoS-policy"], ["FortiGate (NGFW)", "DoS Protection", "DoS Anomaly Config", "set threshold [value]", "Sets the packets-per-second threshold that triggers a DoS anomaly action", "set threshold 2000"], ["FortiGate (NGFW)", "Central NAT", "Global Config", "config firewall central-snat-map", "Defines a centralized source NAT rule independent of policy-based NAT", "config firewall central-snat-map"], ["FortiGate (NGFW)", "Custom Signatures", "Global Config", "config ips custom", "Defines a custom IPS signature for detecting or blocking specific traffic patterns", "config ips custom"], ["FortiGate (NGFW)", "Custom Signatures", "Custom Signature Config", "set signature [signature-string]", "Sets the raw signature syntax matched by a custom IPS rule", "set signature \"F-SBID( --name \\\"Custom.Rule\\\"; --protocol tcp; )\""], ["FortiGate (NGFW)", "SSL Inspection", "Global Config", "config firewall ssl-ssh-profile", "Configures deep-inspection settings for SSL/TLS decryption", "config firewall ssl-ssh-profile"], ["FortiGate (NGFW)", "SSL Inspection", "SSL Profile Config", "set inspect-all deep-inspection", "Sets the profile to deep-inspect all encrypted traffic", "set inspect-all deep-inspection"], ["FortiGate (NGFW)", "Config Management", "Privileged EXEC", "diagnose sys config-error-log read", "Displays recent configuration errors detected by the CLI parser", "diagnose sys config-error-log read"], ["FortiGate (NGFW)", "Config Management", "Privileged EXEC", "execute revision list config", "Lists saved configuration revisions stored for rollback", "execute revision list config"], ["FortiGate (NGFW)", "Config Management", "Privileged EXEC", "execute revision revert config [revision-id]", "Reverts the running configuration to a specific saved revision", "execute revision revert config 3"], ["FortiGate (NGFW)", "Advanced Troubleshooting", "Privileged EXEC", "diagnose sniffer packet [interface] '[filter]' [verbosity] [count]", "Runs a live packet capture on an interface with a BPF-style filter", "diagnose sniffer packet port1 'host 10.1.1.5 and port 443' 4 100"], ["FortiGate (NGFW)", "Advanced Troubleshooting", "Privileged EXEC", "diagnose debug application [daemon] [level]", "Enables verbose debug logging for a specific FortiOS daemon process", "diagnose debug application ike -1"], ["FortiGate (NGFW)", "Advanced Troubleshooting", "Privileged EXEC", "diagnose debug enable", "Enables the diagnose debug output stream to the current console session", "diagnose debug enable"], ["FortiGate (NGFW)", "Advanced Troubleshooting", "Privileged EXEC", "diagnose debug reset", "Resets all debug filters and disables active debug output", "diagnose debug reset"], ["FortiGate (NGFW)", "Advanced Troubleshooting", "Privileged EXEC", "diagnose hardware deviceinfo nic [interface]", "Displays low-level NIC hardware statistics including ring buffers and drops", "diagnose hardware deviceinfo nic port1"], ["FortiGate (NGFW)", "Advanced Troubleshooting", "Privileged EXEC", "diagnose sys top-summary", "Displays an aggregated summary of top CPU and memory consuming processes", "diagnose sys top-summary"], ["FortiGate (NGFW)", "Advanced Troubleshooting", "Privileged EXEC", "diagnose firewall proute list", "Displays the active policy route table used for policy-based routing", "diagnose firewall proute list"], ["FortiGate (NGFW)", "Advanced Troubleshooting", "Privileged EXEC", "diagnose test application [daemon] [option]", "Sends a test signal to a running daemon, useful for forcing state dumps", "diagnose test application ipsmonitor 1"], ["FortiGate (NGFW)", "Advanced Troubleshooting", "Privileged EXEC", "execute log filter category [id]", "Filters the log viewer output by log category before display", "execute log filter category 1"], ["FortiSwitch", "Advanced Troubleshooting", "Privileged EXEC", "diagnose switch-controller distributed-arp-table", "Displays the ARP table synchronized across FortiLink-managed switches", "diagnose switch-controller distributed-arp-table"], ["FortiSwitch", "Advanced Features", "Managed Switch Port Config", "set storm-control-policy [policy]", "Applies a storm-control policy limiting broadcast/multicast/unknown-unicast rates on a port", "set storm-control-policy \"DEFAULT-STORM\""], ["FortiSwitch", "Advanced Features", "Managed Switch Config", "config switch-controller stp-settings", "Configures FortiLink-managed spanning tree parameters pushed to FortiSwitches", "config switch-controller stp-settings"], ["FortiAP", "Advanced Troubleshooting", "Privileged EXEC", "diagnose wireless-controller wlac -c sta", "Displays detailed per-client wireless association and signal statistics", "diagnose wireless-controller wlac -c sta"], ["FortiAP", "Advanced Features", "Radio Config", "set band-select enable", "Steers dual-band capable clients toward the less congested 5GHz radio", "set band-select enable"], ["FortiAP", "Advanced Features", "VAP Config", "set fast-bss-transition enable", "Enables 802.11r fast roaming so clients reassociate faster between APs", "set fast-bss-transition enable"]].map(r => ({device:r[0], category:r[1], mode:r[2], command:r[3], description:r[4], example:r[5]}));
+
+const DEVICE_COLORS = {"FortiGate (NGFW)": "var(--d1)", "FortiSwitch": "var(--d2)", "FortiAP": "var(--d3)", "FortiManager": "var(--d4)"};
+
+const rowsEl = document.getElementById('rows');
+const searchEl = document.getElementById('search');
+const emptyState = document.getElementById('emptyState');
+const countLine = document.getElementById('countLine');
+const categorySelect = document.getElementById('category');
+const deviceFilters = document.getElementById('deviceFilters');
+const resetFiltersBtn = document.getElementById('resetFilters');
+
+const EXTRA_COMMANDS = [
+  {device:"FortiGate (NGFW)", category:"Advanced", mode:"Global Config", command:"config system automation-trigger", description:"Creates automation triggers for event-driven response", example:"config system automation-trigger"},
+  {device:"FortiGate (NGFW)", category:"Advanced", mode:"Global Config", command:"config system automation-action", description:"Defines actions used by automation stitches", example:"config system automation-action"},
+  {device:"FortiGate (NGFW)", category:"Troubleshooting", mode:"Exec", command:"diagnose debug flow filter addr [ip]", description:"Filters debug flow output by source or destination IP", example:"diagnose debug flow filter addr 10.1.10.25"},
+  {device:"FortiGate (NGFW)", category:"Troubleshooting", mode:"Exec", command:"diagnose debug flow trace start [count]", description:"Starts packet flow tracing for policy and routing decisions", example:"diagnose debug flow trace start 50"},
+  {device:"FortiManager", category:"Troubleshooting", mode:"Exec", command:"diagnose dvm device list", description:"Shows managed device status and connectivity from FortiManager", example:"diagnose dvm device list"}
+];
+
+if (Array.isArray(DATA) && DATA.length && Array.isArray(DATA[0])) {
+  DATA.push(...EXTRA_COMMANDS.map(c => [c.device, c.category, c.mode, c.command, c.description, c.example]));
+} else {
+  DATA.push(...EXTRA_COMMANDS);
+}
+
+let activeDevices = new Set();
+let activeCategory = "";
+
+const devices = [...new Set(DATA.map(d => d.device))];
+devices.forEach(dev => {
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.dataset.device = dev;
+  chip.innerHTML = `<span class="swatch" style="color:${DEVICE_COLORS[dev]}"></span>${dev}`;
+  chip.addEventListener('click', () => {
+    if (activeDevices.has(dev)) activeDevices.delete(dev);
+    else activeDevices.add(dev);
+    chip.classList.toggle('active');
+    render();
+  });
+  deviceFilters.insertBefore(chip, categorySelect);
+});
+
+const categories = [...new Set(DATA.map(d => d.category))].sort();
+categories.forEach(cat => {
+  const opt = document.createElement('option');
+  opt.value = cat;
+  opt.textContent = cat;
+  categorySelect.appendChild(opt);
+});
+categorySelect.addEventListener('change', () => { activeCategory = categorySelect.value; render(); });
+resetFiltersBtn.addEventListener('click', () => {
+  searchEl.value = '';
+  activeDevices.clear();
+  activeCategory = '';
+  categorySelect.value = '';
+  deviceFilters.querySelectorAll('.chip[data-device]').forEach(chip => chip.classList.remove('active'));
+  render();
+});
+
+function highlight(text, q) {
+  if (!q) return escapeHtml(text);
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return escapeHtml(text);
+  return escapeHtml(text.slice(0, idx)) + '<mark>' + escapeHtml(text.slice(idx, idx+q.length)) + '</mark>' + escapeHtml(text.slice(idx+q.length));
+}
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function render() {
+  const q = searchEl.value.trim().toLowerCase();
+  const filtered = DATA.filter(d => {
+    if (activeDevices.size && !activeDevices.has(d.device)) return false;
+    if (activeCategory && d.category !== activeCategory) return false;
+    if (!q) return true;
+    return (d.device + ' ' + d.category + ' ' + d.mode + ' ' + d.command + ' ' + d.description + ' ' + d.example)
+      .toLowerCase().includes(q);
+  });
+
+  rowsEl.innerHTML = filtered.map(d => `
+    <tr>
+      <td class="device" style="--tag-color:${DEVICE_COLORS[d.device]}"><span class="tag" style="--tag-color:${DEVICE_COLORS[d.device]}">${d.device}</span></td>
+      <td class="category">${highlight(d.category, q)}</td>
+      <td class="mode">${escapeHtml(d.mode)}</td>
+      <td class="command"><button class="cmd-btn" onclick="copyCmd(this)" data-cmd="${escapeHtml(d.command)}">${highlight(d.command, q)}<span class="copy-icon">â§‰</span></button></td>
+      <td class="desc">${highlight(d.description, q)}</td>
+      <td class="example">${highlight(d.example, q)}</td>
+    </tr>
+  `).join('');
+
+  emptyState.style.display = filtered.length ? 'none' : 'block';
+  countLine.innerHTML = `<b>${filtered.length}</b> / ${DATA.length} commands`;
+}
+
+function copyCmd(btn) {
+  const cmd = btn.getAttribute('data-cmd');
+  navigator.clipboard.writeText(cmd).then(() => {
+    const toast = document.getElementById('toast');
+    toast.textContent = `Copied: ${cmd}`;
+    toast.classList.add('show');
+    clearTimeout(window._t);
+    window._t = setTimeout(() => toast.classList.remove('show'), 1600);
+  });
+}
+
+searchEl.addEventListener('input', render);
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && document.activeElement !== searchEl) {
+    e.preventDefault();
+    searchEl.focus();
+  }
+  if (e.key === 'Escape') {
+    searchEl.value = '';
+    searchEl.blur();
+    render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
+

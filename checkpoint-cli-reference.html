@@ -1,0 +1,463 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Check Point CLI Command Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#160c0e;
+    --bg-raised:#231318;
+    --panel:#1d1014;
+    --border:#412430;
+    --border-soft:#301a23;
+    --text:#e9f0f8;
+    --text-dim:#95a8bd;
+    --text-faint:#607086;
+    --signal:#fb7185;
+    --signal-rgb:251,113,133;
+    --d1:#fb7185;
+    --d2:#fbbf6f;
+    --d3:#7dd3fc;
+    --d4:#c4b5fd;
+    --mono:'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius:10px;
+    --ease:cubic-bezier(.4,0,.2,1);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{margin:0;padding:0;}
+  ::selection{background:rgba(var(--signal-rgb),.32);color:#fff;}
+
+  body{
+    background:
+      radial-gradient(ellipse 1000px 520px at 12% -12%, rgba(var(--signal-rgb),0.10), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 100% 0%, rgba(var(--signal-rgb),0.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    line-height:1.5;
+  }
+
+  a{color:var(--signal);}
+
+  /* focus accessibility */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, .chip:focus-visible{
+    outline:2px solid var(--signal);
+    outline-offset:2px;
+    border-radius:4px;
+  }
+
+  /* ---------- Title bar ---------- */
+  .titlebar{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 22px;
+    background:rgba(10,14,20,0.72);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:30;
+  }
+  .dots{display:flex;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;opacity:.9;}
+  .dot.r{background:#e0665a;}.dot.y{background:#e4b45a;}.dot.g{background:#5ec78b;}
+  .titlebar .path{font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-left:6px;letter-spacing:.01em;}
+  .titlebar .path b{color:var(--signal);font-weight:500;}
+  .menu-btn{
+    margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--text);text-decoration:none;
+    border:1px solid var(--border);background:var(--panel);padding:6px 12px;border-radius:7px;
+    transition:border-color .18s var(--ease), background .18s var(--ease), transform .18s var(--ease), color .18s var(--ease);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .menu-btn::before{content:"←";opacity:.6;transition:transform .18s var(--ease);}
+  .menu-btn:hover{border-color:var(--signal);color:var(--signal);background:var(--bg-raised);}
+  .menu-btn:hover::before{transform:translateX(-2px);}
+
+  /* ---------- Hero ---------- */
+  header.hero{max-width:1720px;margin:0 auto;padding:40px 24px 20px;}
+  .eyebrow{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--signal);
+    text-transform:uppercase;margin:0 0 12px;display:flex;align-items:center;gap:8px;font-weight:600;
+  }
+  .eyebrow::before{content:"";width:7px;height:7px;background:var(--signal);border-radius:50%;box-shadow:0 0 10px 1px rgba(var(--signal-rgb),.8);}
+  h1{font-weight:700;font-size:clamp(26px,3.6vw,38px);margin:0 0 10px;letter-spacing:-0.015em;line-height:1.15;}
+  header.hero p.sub{color:var(--text-dim);font-size:15px;max-width:820px;line-height:1.6;margin:0;}
+
+  /* ---------- Controls ---------- */
+  .controls{
+    max-width:1720px;margin:0 auto;padding:0 24px 16px;
+    position:sticky;top:45px;z-index:20;
+    background:linear-gradient(var(--bg) 78%, transparent);
+    padding-top:6px;
+  }
+  .search-wrap{
+    display:flex;align-items:center;background:var(--panel);border:1px solid var(--border);
+    border-radius:var(--radius);padding:0 8px 0 16px;font-family:var(--mono);
+    transition:border-color .18s var(--ease), box-shadow .18s var(--ease);
+  }
+  .search-wrap:focus-within{border-color:var(--signal);box-shadow:0 0 0 3px rgba(var(--signal-rgb),0.15);}
+  .prompt{color:var(--signal);font-weight:600;font-size:14px;white-space:nowrap;}
+  #search{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:14px;padding:13px 10px;}
+  #search::placeholder{color:var(--text-faint);}
+  kbd{font-family:var(--mono);font-size:11px;color:var(--text-dim);border:1px solid var(--border-soft);background:var(--bg-raised);border-radius:5px;padding:3px 7px;margin-left:auto;}
+
+  .filters-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;}
+  .chip{
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:6.5px 14px;cursor:pointer;
+    display:flex;align-items:center;gap:7px;user-select:none;
+    transition:border-color .16s var(--ease), color .16s var(--ease), background .16s var(--ease), transform .12s var(--ease);
+  }
+  .chip:hover{border-color:var(--border-soft);color:var(--text);transform:translateY(-1px);}
+  .chip:active{transform:translateY(0);}
+  .chip .swatch{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .chip.active{color:var(--bg);background:var(--chip-color,var(--signal));border-color:var(--chip-color,var(--signal));font-weight:600;}
+  .reset-chip{margin-left:auto;}
+
+  select#category{
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:6.5px 30px 6.5px 14px;cursor:pointer;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0 L5 6 L10 0 Z' fill='%2395a8bd'/></svg>");
+    background-repeat:no-repeat;background-position:right 13px center;
+    transition:border-color .16s var(--ease);
+  }
+  select#category:hover{border-color:var(--border-soft);}
+  .count-line{font-family:var(--mono);font-size:12px;color:var(--text-faint);margin-left:4px;}
+
+  /* ---------- Table ---------- */
+  main{max-width:1720px;margin:0 auto;padding:6px 24px 54px;}
+  .table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--panel);}
+  .table-wrap > table{display:block;overflow:auto;max-height:none;}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  thead th{
+    text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--text-dim);font-weight:600;background:var(--bg-raised);padding:12px 16px;
+    border-bottom:1px solid var(--border);position:sticky;top:0;
+  }
+  tbody tr{border-bottom:1px solid var(--border-soft);transition:background .12s var(--ease);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:rgba(var(--signal-rgb),0.055);}
+  td{padding:13px 16px;vertical-align:top;font-size:13px;line-height:1.55;}
+  td.device{white-space:nowrap;border-left:3px solid var(--tag-color);}
+  .tag{
+    font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.02em;color:var(--tag-color);
+    background:color-mix(in srgb, var(--tag-color) 14%, transparent);
+    border:1px solid color-mix(in srgb, var(--tag-color) 38%, transparent);
+    padding:3.5px 9px;border-radius:5px;white-space:nowrap;display:inline-block;
+  }
+  td.category{color:var(--text-dim);font-size:13px;white-space:nowrap;}
+  td.mode{color:var(--text-faint);font-size:11.5px;font-family:var(--mono);white-space:nowrap;text-transform:uppercase;letter-spacing:.03em;}
+  td.command{font-family:var(--mono);white-space:normal;overflow-wrap:anywhere;}
+  td.desc{color:#eef4fb;white-space:normal;overflow-wrap:anywhere;}
+  td.example{font-family:var(--mono);color:var(--text-dim);font-size:12px;white-space:normal;overflow-wrap:anywhere;}
+  mark{background:rgba(var(--signal-rgb),.32);color:#fff;border-radius:2px;padding:0 1px;}
+  .cmd-btn{
+    background:none;border:none;padding:2px 0;color:var(--signal);font-family:var(--mono);font-size:13px;
+    cursor:pointer;text-align:left;display:inline-flex;align-items:center;gap:8px;border-radius:4px;
+  }
+  .cmd-btn:hover{text-decoration:underline;}
+  .copy-icon{opacity:.45;font-size:11px;transition:opacity .16s var(--ease);}
+  .cmd-btn:hover .copy-icon{opacity:.9;}
+
+  .empty{text-align:center;padding:70px 20px;color:var(--text-dim);font-family:var(--mono);font-size:13px;}
+
+  /* ---------- Examples ---------- */
+  .examples{max-width:1720px;margin:26px auto 10px;padding:0 24px;}
+  .examples h2{margin:0 0 8px;font-size:19px;letter-spacing:-0.01em;}
+  .examples p{margin:0 0 16px;color:var(--text-dim);font-size:14px;}
+  .example-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;}
+  .example-card{
+    border:1px solid var(--border);background:var(--panel);border-radius:var(--radius);padding:14px 16px;
+    transition:border-color .18s var(--ease), transform .18s var(--ease);
+  }
+  .example-card:hover{border-color:var(--border-soft);transform:translateY(-2px);}
+  .example-card h3{margin:0 0 10px;font-size:12.5px;font-family:var(--mono);color:var(--signal);letter-spacing:.02em;text-transform:uppercase;}
+  .example-card pre{margin:0;white-space:pre-wrap;font-family:var(--mono);font-size:12px;color:var(--text-dim);line-height:1.55;}
+
+  /* ---------- Toast & footer ---------- */
+  .toast{
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(14px);
+    background:var(--signal);color:#0a0e14;font-family:var(--mono);font-weight:700;font-size:13px;
+    padding:11px 20px;border-radius:9px;opacity:0;pointer-events:none;
+    transition:opacity .2s var(--ease), transform .2s var(--ease);z-index:50;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  footer{text-align:center;color:var(--text-faint);font-family:var(--mono);font-size:11.5px;padding:20px 24px 40px;border-top:1px solid var(--border-soft);margin-top:10px;max-width:1720px;margin-left:auto;margin-right:auto;}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none!important;}
+  }
+
+  @media (max-width:900px){
+    .controls{position:static;}
+    thead{display:none;}
+    table,tbody,tr,td{display:block;width:100%;}
+    tbody tr{padding:14px 16px 16px;position:relative;}
+    td{padding:3px 0;border:none!important;}
+    td.device{border-left:none;padding-bottom:8px;}
+    td.category, td.mode{display:inline-block;margin-right:10px;}
+    td.command{margin:6px 0 4px;}
+    td.example{margin-top:6px;padding:9px 11px;background:var(--bg-raised);border-radius:7px;}
+  }
+
+  @media (max-width:560px){
+    header.hero{padding:28px 16px 16px;}
+    .controls{padding:0 16px 14px;}
+    main{padding:6px 16px 40px;}
+    .examples{padding:0 16px;}
+    .filters-row{gap:6px;}
+    .reset-chip{margin-left:0;}
+  }
+
+</style>
+</head>
+<body>
+<div class="titlebar">
+  <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+  <span class="path">admin@checkpoint-gw:<b>~/cli-reference</b>$</span>
+  <a class="menu-btn" href="index.html">Back to Menu</a>
+</div>
+
+<header class="hero">
+  <p class="eyebrow">Check Point Reference</p>
+  <h1>Check Point CLI Command Reference</h1>
+  <p class="sub">Searchable command reference for Gaia gateways, ClusterXL, VSX, and SmartConsole operations including advanced and troubleshooting workflows.</p>
+</header>
+
+<div class="controls">
+  <div class="search-wrap"><span class="prompt">&gt;</span><input id="search" type="text" placeholder="search commands, descriptions, categories..." autocomplete="off" spellcheck="false"><kbd>/</kbd></div>
+  <div class="filters-row" id="deviceFilters">
+    <select id="category"><option value="">All categories</option></select>
+    <span class="count-line" id="countLine"></span>
+    <button class="chip reset-chip" id="resetFilters" type="button">Show All</button>
+  </div>
+</div>
+
+<main>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:12%">Device</th>
+          <th style="width:10%">Category</th>
+          <th style="width:9%">Mode</th>
+          <th style="width:20%">Command</th>
+          <th style="width:31%">Description</th>
+          <th style="width:18%">Example</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="emptyState" style="display:none;">No commands match your search.</div>
+  </div>
+</main>
+
+<section class="examples">
+  <h2>Configuration and Output Examples</h2>
+  <p>Operational snippets for baseline validation and fault isolation.</p>
+  <div class="example-grid">
+    <article class="example-card"><h3>Access Policy Install Example</h3><pre>[Expert]# mgmt_cli login -u admin -p ******
+  [Expert]# mgmt_cli publish
+  [Expert]# mgmt_cli install-policy policy-package "Standard" targets.1 "GW-EDGE-01" access true threat-prevention true</pre></article>
+    <article class="example-card"><h3>Troubleshooting Output</h3><pre>[Expert]# cpview -t
+  CPU 14%  MEM 61%  Connections 12431  VPN Tunnels 19
+
+  [Expert]# fw ctl pstat
+  System Capacity Summary:
+  Current connections: 12431</pre></article>
+  </div>
+</section>
+
+  <footer>Check Point CLI Command Reference · offline static page · Copyright Artan V.</footer>
+<div class="toast" id="toast">Copied</div>
+
+<script>
+const DATA = [
+  {device:"Gaia / Security Gateway",category:"System",mode:"Expert",command:"cpinfo -y all",description:"Collects full platform diagnostics for TAC and incident review.",example:"cpinfo -y all"},
+  {device:"Gaia / Security Gateway",category:"Interfaces",mode:"Clish",command:"set interface eth0 ipv4-address 10.1.1.10 mask-length 24",description:"Configures interface IP address on Gaia.",example:"set interface eth0 ipv4-address 10.1.1.10 mask-length 24"},
+  {device:"Gaia / Security Gateway",category:"Policy",mode:"Expert",command:"fw stat",description:"Shows currently installed firewall policy packages.",example:"fw stat"},
+  {device:"ClusterXL",category:"HA",mode:"Expert",command:"cphaprob stat",description:"Displays ClusterXL member state, active node, and interfaces.",example:"cphaprob stat"},
+  {device:"ClusterXL",category:"HA",mode:"Expert",command:"cphaprob -a if",description:"Shows ClusterXL monitored interfaces and status.",example:"cphaprob -a if"},
+  {device:"VSX / Virtual Systems",category:"VSX",mode:"Expert",command:"vsx stat -v",description:"Lists virtual systems and their running status.",example:"vsx stat -v"},
+  {device:"VSX / Virtual Systems",category:"Routing",mode:"Expert",command:"vsenv [VSID]",description:"Switches shell context into a specific virtual system.",example:"vsenv 3"},
+  {device:"SmartConsole / Management",category:"Management",mode:"API",command:"mgmt_cli show gateways-and-servers details-level full",description:"Queries gateway objects from management via API.",example:"mgmt_cli show gateways-and-servers details-level full"},
+
+  {device:"Gaia / Security Gateway",category:"Advanced",mode:"Expert",command:"fw ctl set int fwha_debug 1",description:"Enables low-level HA debug variable for detailed analysis.",example:"fw ctl set int fwha_debug 1"},
+  {device:"VSX / Virtual Systems",category:"Advanced",mode:"Expert",command:"vsx_util reconfigure",description:"Runs VSX utility for advanced reconfiguration workflows.",example:"vsx_util reconfigure"},
+  {device:"SmartConsole / Management",category:"Advanced",mode:"API",command:"mgmt_cli install-policy policy-package Standard targets.1 GW-EDGE-01 access true threat-prevention true",description:"Installs access and threat policy via management API.",example:"mgmt_cli install-policy policy-package Standard targets.1 GW-EDGE-01 access true threat-prevention true"},
+
+  {device:"Gaia / Security Gateway",category:"Troubleshooting",mode:"Expert",command:"fw ctl zdebug + drop",description:"Real-time debug stream for packet drops in policy path.",example:"fw ctl zdebug + drop"},
+  {device:"Gaia / Security Gateway",category:"Troubleshooting",mode:"Expert",command:"tcpdump -eni any host 8.8.8.8",description:"Captures packets on all interfaces for a target host.",example:"tcpdump -eni any host 8.8.8.8"},
+  {device:"ClusterXL",category:"Troubleshooting",mode:"Expert",command:"cpwd_admin list",description:"Shows health and restart counters for core daemons.",example:"cpwd_admin list"},
+  {device:"VSX / Virtual Systems",category:"Troubleshooting",mode:"Expert",command:"fw monitor -e \"accept host(10.10.10.10);\"",description:"Captures packet path through INSPECT chain for selected host.",example:"fw monitor -e \"accept host(10.10.10.10);\""},
+  {device:"SmartConsole / Management",category:"Troubleshooting",mode:"Expert",command:"api status",description:"Validates management API service health and readiness.",example:"api status"}
+];
+
+const EXTRA_COMMANDS = [
+  {device:"Gaia / Security Gateway",category:"System",mode:"Clish",command:"show asset all",description:"Displays hardware and software asset inventory.",example:"show asset all"},
+  {device:"Gaia / Security Gateway",category:"System",mode:"Clish",command:"show configuration",description:"Prints running Gaia configuration.",example:"show configuration"},
+  {device:"Gaia / Security Gateway",category:"Interfaces",mode:"Clish",command:"show interfaces all",description:"Shows interface addressing and admin state.",example:"show interfaces all"},
+  {device:"Gaia / Security Gateway",category:"Routing",mode:"Clish",command:"show route all",description:"Displays full routing table.",example:"show route all"},
+  {device:"Gaia / Security Gateway",category:"Routing",mode:"Clish",command:"set static-route 0.0.0.0/0 nexthop gateway address 203.0.113.1 on",description:"Configures default route on Gaia.",example:"set static-route 0.0.0.0/0 nexthop gateway address 203.0.113.1 on"},
+  {device:"Gaia / Security Gateway",category:"Policy",mode:"Expert",command:"fw stat -l",description:"Lists policy modules and load status.",example:"fw stat -l"},
+  {device:"Gaia / Security Gateway",category:"NAT",mode:"Expert",command:"fw tab -t connections -s",description:"Shows connection table size/counters for NAT path checks.",example:"fw tab -t connections -s"},
+
+  {device:"ClusterXL",category:"HA",mode:"Expert",command:"cphaprob syncstat",description:"Shows state synchronization status between members.",example:"cphaprob syncstat"},
+  {device:"ClusterXL",category:"HA",mode:"Expert",command:"clusterXL_admin down",description:"Gracefully takes member out of cluster service.",example:"clusterXL_admin down"},
+  {device:"ClusterXL",category:"HA",mode:"Expert",command:"clusterXL_admin up",description:"Returns member to active cluster participation.",example:"clusterXL_admin up"},
+  {device:"ClusterXL",category:"HA",mode:"Expert",command:"cphaprob list",description:"Lists ClusterXL state machine data.",example:"cphaprob list"},
+
+  {device:"VSX / Virtual Systems",category:"VSX",mode:"Expert",command:"vsx stat",description:"Displays VSX global status summary.",example:"vsx stat"},
+  {device:"VSX / Virtual Systems",category:"VSX",mode:"Expert",command:"vsenv 0",description:"Returns to VS0 context.",example:"vsenv 0"},
+  {device:"VSX / Virtual Systems",category:"Routing",mode:"Expert",command:"netstat -rn",description:"Checks routing table inside selected VS context.",example:"netstat -rn"},
+  {device:"VSX / Virtual Systems",category:"Policy",mode:"Expert",command:"fw stat",description:"Shows policy installed on selected VS.",example:"fw stat"},
+
+  {device:"SmartConsole / Management",category:"Management",mode:"API",command:"mgmt_cli show package name Standard",description:"Retrieves policy package details.",example:"mgmt_cli show package name Standard"},
+  {device:"SmartConsole / Management",category:"Management",mode:"API",command:"mgmt_cli show sessions details-level full",description:"Lists open/locked management sessions.",example:"mgmt_cli show sessions details-level full"},
+  {device:"SmartConsole / Management",category:"Management",mode:"API",command:"mgmt_cli discard",description:"Discards unpublished API session changes.",example:"mgmt_cli discard"},
+
+  {device:"Gaia / Security Gateway",category:"Advanced",mode:"Expert",command:"sim affinity -s",description:"Shows SecureXL core affinity assignments.",example:"sim affinity -s"},
+  {device:"Gaia / Security Gateway",category:"Advanced",mode:"Expert",command:"fwaccel stat",description:"Displays acceleration status and templates.",example:"fwaccel stat"},
+  {device:"Gaia / Security Gateway",category:"Advanced",mode:"Expert",command:"fw ctl chain",description:"Shows INSPECT chain modules in packet path.",example:"fw ctl chain"},
+  {device:"ClusterXL",category:"Advanced",mode:"Expert",command:"cphaconf set_ccp multicast",description:"Sets ClusterXL CCP mode to multicast.",example:"cphaconf set_ccp multicast"},
+  {device:"VSX / Virtual Systems",category:"Advanced",mode:"Expert",command:"vsx_util vsls",description:"Manages VSLS load sharing operations.",example:"vsx_util vsls"},
+
+  {device:"Gaia / Security Gateway",category:"Troubleshooting",mode:"Expert",command:"cpview",description:"Runs real-time system health dashboard.",example:"cpview"},
+  {device:"Gaia / Security Gateway",category:"Troubleshooting",mode:"Expert",command:"fw monitor -e \"accept host(8.8.8.8);\"",description:"Captures packet traversals through kernel path.",example:"fw monitor -e \"accept host(8.8.8.8);\""},
+  {device:"Gaia / Security Gateway",category:"Troubleshooting",mode:"Expert",command:"tcpdump -eni any port 500 or port 4500",description:"Captures IKE/IPsec negotiation packets.",example:"tcpdump -eni any port 500 or port 4500"},
+  {device:"ClusterXL",category:"Troubleshooting",mode:"Expert",command:"cphaprob -m if",description:"Monitors ClusterXL interface state changes.",example:"cphaprob -m if"},
+  {device:"VSX / Virtual Systems",category:"Troubleshooting",mode:"Expert",command:"fw ctl pstat",description:"Shows kernel memory/connection utilization.",example:"fw ctl pstat"},
+  {device:"SmartConsole / Management",category:"Troubleshooting",mode:"Expert",command:"tail -f $FWDIR/log/fwm.elg",description:"Streams management daemon logs for policy issues.",example:"tail -f $FWDIR/log/fwm.elg"}
+];
+DATA.push(...EXTRA_COMMANDS);
+
+const BULK_PACK = [];
+
+["eth0","eth1","eth2","eth3","eth4","eth5","bond0","bond1","sync","lo"].forEach(ifn => {
+  BULK_PACK.push({device:"Gaia / Security Gateway",category:"Interfaces",mode:"Clish",command:`show interface ${ifn}`,description:"Displays interface details including errors and counters.",example:`show interface ${ifn}`});
+});
+
+["10.1.1.0/24","10.2.2.0/24","10.3.3.0/24","10.4.4.0/24","172.16.10.0/24","172.16.20.0/24","192.168.10.0/24","192.168.20.0/24"].forEach(net => {
+  BULK_PACK.push({device:"Gaia / Security Gateway",category:"Routing",mode:"Clish",command:`show route destination ${net}`,description:"Checks route selection path for specific destination network.",example:`show route destination ${net}`});
+});
+
+["SIC","CPD","FWD","AMON","SVNFOUND","CPM","API","PEPD","CPCA","CPSNMPD"].forEach(proc => {
+  BULK_PACK.push({device:"Gaia / Security Gateway",category:"System",mode:"Expert",command:`cpwd_admin list | grep ${proc}`,description:"Checks daemon watchdog status for named process.",example:`cpwd_admin list | grep ${proc}`});
+});
+
+[1,2,3,4,5,6,7,8,9,10].forEach(vsid => {
+  BULK_PACK.push({device:"VSX / Virtual Systems",category:"VSX",mode:"Expert",command:`vsenv ${vsid}; fw stat`,description:"Validates policy installation status inside selected VS.",example:`vsenv ${vsid}; fw stat`});
+});
+
+["fw ctl zdebug + drop","fw ctl zdebug + packet","fw ctl zdebug + conn","fw ctl zdebug + nat","fw ctl zdebug + vpn","fw ctl zdebug + cluster","fw ctl zdebug + rulebase","fw ctl zdebug + xlate","fw ctl zdebug + sxl","fw ctl zdebug + monitor"].forEach(dbg => {
+  BULK_PACK.push({device:"Gaia / Security Gateway",category:"Troubleshooting",mode:"Expert",command:dbg,description:"Runs focused real-time kernel debug for specific packet-path area.",example:dbg});
+});
+
+DATA.push(...BULK_PACK);
+
+const DEVICE_COLORS = {
+  "Gaia / Security Gateway":"var(--d1)",
+  "ClusterXL":"var(--d2)",
+  "VSX / Virtual Systems":"var(--d3)",
+  "SmartConsole / Management":"var(--d4)"
+};
+
+const rowsEl = document.getElementById('rows');
+const searchEl = document.getElementById('search');
+const emptyState = document.getElementById('emptyState');
+const countLine = document.getElementById('countLine');
+const categorySelect = document.getElementById('category');
+const deviceFilters = document.getElementById('deviceFilters');
+const resetFiltersBtn = document.getElementById('resetFilters');
+
+let activeDevices = new Set();
+let activeCategory = "";
+
+const devices = [...new Set(DATA.map(d => d.device))];
+devices.forEach(dev => {
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.dataset.device = dev;
+  chip.innerHTML = `<span class="swatch" style="color:${DEVICE_COLORS[dev]}"></span>${dev}`;
+  chip.addEventListener('click', () => {
+    if (activeDevices.has(dev)) activeDevices.delete(dev); else activeDevices.add(dev);
+    chip.classList.toggle('active');
+    render();
+  });
+  deviceFilters.insertBefore(chip, categorySelect);
+});
+
+[...new Set(DATA.map(d => d.category))].sort().forEach(cat => {
+  const opt = document.createElement('option');
+  opt.value = cat;
+  opt.textContent = cat;
+  categorySelect.appendChild(opt);
+});
+
+categorySelect.addEventListener('change', () => { activeCategory = categorySelect.value; render(); });
+resetFiltersBtn.addEventListener('click', () => {
+  searchEl.value = '';
+  activeDevices.clear();
+  activeCategory = '';
+  categorySelect.value = '';
+  deviceFilters.querySelectorAll('.chip[data-device]').forEach(chip => chip.classList.remove('active'));
+  render();
+});
+
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function highlight(text,q){if(!q)return escapeHtml(text);const i=text.toLowerCase().indexOf(q.toLowerCase());if(i===-1)return escapeHtml(text);return escapeHtml(text.slice(0,i))+'<mark>'+escapeHtml(text.slice(i,i+q.length))+'</mark>'+escapeHtml(text.slice(i+q.length));}
+
+function render(){
+  const q = searchEl.value.trim().toLowerCase();
+  const filtered = DATA.filter(d => {
+    if (activeDevices.size && !activeDevices.has(d.device)) return false;
+    if (activeCategory && d.category !== activeCategory) return false;
+    if (!q) return true;
+    return (d.device+' '+d.category+' '+d.mode+' '+d.command+' '+d.description+' '+d.example).toLowerCase().includes(q);
+  });
+
+  rowsEl.innerHTML = filtered.map(d => `
+    <tr>
+      <td class="device" style="--tag-color:${DEVICE_COLORS[d.device]}"><span class="tag" style="--tag-color:${DEVICE_COLORS[d.device]}">${d.device}</span></td>
+      <td class="category">${highlight(d.category,q)}</td>
+      <td class="mode">${escapeHtml(d.mode)}</td>
+      <td class="command"><button class="cmd-btn" onclick="copyCmd(this)" data-cmd="${escapeHtml(d.command)}">${highlight(d.command,q)}<span class="copy-icon">[]</span></button></td>
+      <td class="desc">${highlight(d.description,q)}</td>
+      <td class="example">${highlight(d.example,q)}</td>
+    </tr>`).join('');
+
+  emptyState.style.display = filtered.length ? 'none' : 'block';
+  countLine.innerHTML = `<b>${filtered.length}</b> / ${DATA.length} commands`;
+}
+
+function copyCmd(btn){
+  const cmd = btn.getAttribute('data-cmd');
+  navigator.clipboard.writeText(cmd).then(() => {
+    const toast = document.getElementById('toast');
+    toast.textContent = `Copied: ${cmd}`;
+    toast.classList.add('show');
+    clearTimeout(window._t);
+    window._t = setTimeout(() => toast.classList.remove('show'), 1600);
+  });
+}
+
+searchEl.addEventListener('input', render);
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && document.activeElement !== searchEl) { e.preventDefault(); searchEl.focus(); }
+  if (e.key === 'Escape') { searchEl.value = ''; render(); }
+});
+render();
+</script>
+</body>
+</html>

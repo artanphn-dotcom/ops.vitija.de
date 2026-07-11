@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network & Security CLI Command Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0b1420;
+    --panel: #111e2c;
+    --panel-raised: #16283a;
+    --line: #1f3348;
+    --line-soft: #182a3c;
+    --text: #dbe7f0;
+    --text-dim: #7f97ab;
+    --text-faint: #52697c;
+    --accent: #4fd1c5;
+    --accent-soft: rgba(79,209,197,0.12);
+    --accent-strong: #6ee7db;
+    --amber: #f0b45c;
+    --tag-router: #6ea8fe;
+    --tag-switch: #4fd1c5;
+    --tag-nexus: #b48cff;
+    --tag-fw: #f0716e;
+    --tag-wlc: #f0b45c;
+    --tag-ise: #7fe0a0;
+    --tag-dna: #f28fce;
+    --tag-sr: #9fb2c3;
+    --mono: 'JetBrains Mono', "SF Mono", "Fira Code", Consolas, Menlo, Monaco, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, .chip:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(79,209,197,0.06), transparent 45%),
+      radial-gradient(circle at 85% 10%, rgba(180,140,255,0.05), transparent 40%);
+    min-height: 100vh;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(11,20,32,0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    padding: 18px 28px 16px;
+  }
+
+  .topbar-inner {
+    max-width: 1700px;
+    margin: 0 auto;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .brand .prompt {
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 15px;
+  }
+
+  .brand h1 {
+    font-size: 18px;
+    font-weight: 650;
+    letter-spacing: 0.2px;
+    margin: 0;
+    color: var(--text);
+  }
+
+  .brand .sub {
+    font-size: 12.5px;
+    color: var(--text-faint);
+    margin-left: 4px;
+  }
+
+  .count-pill {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    padding: 5px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .count-pill b { color: var(--accent-strong); font-weight: 700; }
+
+  .menu-btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent-strong);
+    text-decoration: none;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 8px;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+  .menu-btn:hover { border-color: var(--accent); }
+
+  /* ---------- Search ---------- */
+  .search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .search-box {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-box .glyph {
+    position: absolute;
+    left: 14px;
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  #search {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14.5px;
+    padding: 12px 40px 12px 34px;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+
+  #search::placeholder { color: var(--text-faint); }
+
+  #search:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .clear-btn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-faint);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 6px;
+    line-height: 1;
+    display: none;
+  }
+  .clear-btn:hover { color: var(--text); }
+
+  .reset-btn {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0 16px;
+    cursor: pointer;
+    transition: all .15s ease;
+    white-space: nowrap;
+  }
+  .reset-btn:hover { border-color: var(--accent); color: var(--accent-strong); }
+
+  /* ---------- Filter chips ---------- */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    align-items: center;
+  }
+
+  .filters .flabel {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    margin-right: 4px;
+    font-weight: 600;
+  }
+
+  .chip {
+    font-family: var(--sans);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: all .12s ease;
+    white-space: nowrap;
+  }
+
+  .chip:hover {
+    color: var(--text);
+    border-color: var(--text-faint);
+  }
+
+  .chip.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent-strong);
+  }
+
+  .chip .dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+  }
+
+  select#categoryFilter {
+    font-family: var(--sans);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 6px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    outline: none;
+  }
+  select#categoryFilter:hover { border-color: var(--text-faint); }
+
+  /* ---------- Main content ---------- */
+  main {
+    max-width: 1700px;
+    margin: 0 auto;
+    padding: 22px 28px 60px;
+  }
+
+  .table-wrap {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: auto;
+    background: var(--panel);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 13.5px;
+  }
+
+  thead th {
+    position: static;
+    background: #0e1926;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-faint);
+    font-weight: 700;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  thead th[data-key="device"]{ width: 12%; }
+  thead th[data-key="category"]{ width: 10%; }
+  thead th[data-key="mode"]{ width: 9%; }
+  thead th[data-key="command"]{ width: 20%; }
+  thead th[data-key="description"]{ width: 31%; }
+  thead th[data-key="example"]{ width: 18%; }
+
+  thead th:hover { color: var(--accent-strong); }
+
+  thead th .arrow {
+    display: inline-block;
+    margin-left: 4px;
+    opacity: 0;
+    transition: opacity .1s ease;
+  }
+  thead th.sorted .arrow { opacity: 1; color: var(--accent); }
+
+  tbody tr {
+    border-bottom: 1px solid var(--line-soft);
+    transition: background .1s ease;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--panel-raised); }
+
+  td {
+    padding: 12px 16px;
+    vertical-align: top;
+    color: var(--text);
+  }
+
+  td.col-device { white-space: nowrap; }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 3px 9px 3px 7px;
+    border-radius: 6px;
+    white-space: nowrap;
+    background: rgba(255,255,255,0.04);
+  }
+  .tag .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink:0; }
+
+  td.col-category {
+    color: var(--text-dim);
+    white-space: nowrap;
+    font-size: 12.5px;
+  }
+
+  td.col-mode {
+    color: var(--text-faint);
+    white-space: nowrap;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+
+  td.col-command {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent-strong);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  td.col-command .cmd-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .copy-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid transparent;
+    color: var(--text-faint);
+    font-family: var(--sans);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 5px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .12s ease, color .12s ease, border-color .12s ease;
+    white-space: nowrap;
+  }
+
+  tr:hover .copy-btn { opacity: 1; }
+  .copy-btn:hover { color: var(--accent-strong); border-color: var(--line); }
+  .copy-btn.copied { opacity: 1; color: var(--amber); border-color: var(--amber); }
+
+  td.col-description {
+    color: #e7f0fc;
+    line-height: 1.45;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  td.col-example {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: #c8d8ea;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  mark {
+    background: rgba(240,180,92,0.28);
+    color: var(--amber);
+    border-radius: 3px;
+    padding: 0 1px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 70px 20px;
+    color: var(--text-faint);
+  }
+  .empty-state .glyph {
+    font-family: var(--mono);
+    font-size: 28px;
+    color: var(--text-faint);
+    margin-bottom: 10px;
+  }
+  .empty-state .msg { font-size: 14px; }
+  .empty-state .hint { font-size: 12.5px; margin-top: 6px; color: var(--text-faint); }
+
+  .examples {
+    max-width: 1400px;
+    margin: 22px auto 10px;
+    padding: 0 28px;
+  }
+  .examples h2 {
+    margin: 0 0 8px;
+    font-size: 21px;
+  }
+  .examples p {
+    margin: 0 0 14px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .example-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 12px;
+  }
+  .example-card {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .example-card h3 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-family: var(--mono);
+    color: var(--accent-strong);
+  }
+  .example-card pre {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.45;
+  }
+
+  footer {
+    max-width: 1700px;
+    margin: 0 auto;
+    padding: 0 28px 40px;
+    color: var(--text-faint);
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  footer .kbd {
+    font-family: var(--mono);
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--text-dim);
+  }
+
+  .credit {
+    max-width: 1700px;
+    margin: 0 auto;
+    padding: 16px 28px 34px;
+    border-top: 1px solid var(--line-soft);
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--text-faint);
+    letter-spacing: 0.02em;
+  }
+  .credit span { color: var(--text-dim); }
+
+  @media (max-width: 900px) {
+    .topbar { padding: 14px 16px 14px; }
+    main { padding: 16px 16px 50px; }
+    footer { padding: 0 16px 30px; }
+
+    .table-wrap { overflow: visible; border-radius: 10px; }
+
+    table, tbody, tr, td { display: block; width: 100%; }
+    thead { display: none; }
+
+    tbody tr {
+      padding: 14px 14px 14px;
+      position: relative;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    td { padding: 3px 0; border: none !important; }
+
+    td.col-device { white-space: normal; padding-bottom: 8px; }
+    td.col-category, td.col-mode {
+      display: inline-block;
+      margin-right: 10px;
+      padding-bottom: 4px;
+    }
+    td.col-command { margin: 6px 0 4px; white-space: normal; }
+    td.col-description { margin: 4px 0; }
+    td.col-example {
+      margin-top: 8px;
+      padding: 9px 11px;
+      background: var(--panel-raised);
+      border-radius: 7px;
+      white-space: normal;
+    }
+
+    /* No hover on touch devices — keep the copy control reachable */
+    .copy-btn {
+      opacity: 1;
+      border-color: var(--line);
+      position: absolute;
+      top: 14px;
+      right: 14px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .topbar { padding: 12px 14px 12px; }
+    .brand-row { gap: 10px; }
+    main { padding: 12px 14px 40px; }
+    .filters { gap: 8px; }
+    thead th[data-key="device"], thead th[data-key="category"],
+    thead th[data-key="mode"], thead th[data-key="command"],
+    thead th[data-key="description"], thead th[data-key="example"] { width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand-row">
+      <div class="brand">
+        <span class="prompt">&gt;</span>
+        <h1>Network &amp; Security CLI Command Reference</h1>
+        <span class="sub">IOS · IOS-XE · NX-OS · ASA · FTD · WLC · ISE · DNA Center</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a class="menu-btn" href="index.html">Back to Menu</a>
+        <div class="count-pill"><b id="resultCount">0</b> / <span id="totalCount">0</span> commands</div>
+      </div>
+    </div>
+
+    <div class="search-row">
+      <div class="search-box">
+        <span class="glyph">$</span>
+        <input id="search" type="text" placeholder="Search commands, descriptions, categories… e.g. vlan, nat, ospf, failover" autocomplete="off" spellcheck="false">
+        <button class="clear-btn" id="clearSearch" title="Clear search">×</button>
+      </div>
+      <button class="reset-btn" id="resetAll">Reset filters</button>
+    </div>
+
+    <div class="filters" id="deviceFilters">
+      <span class="flabel">Device</span>
+      <!-- device chips injected by JS -->
+      <span class="flabel" style="margin-left:10px;">Category</span>
+      <select id="categoryFilter">
+        <option value="">All categories</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="table-wrap">
+    <table id="cmdTable">
+      <thead>
+        <tr>
+          <th data-key="device">Device Type <span class="arrow">▾</span></th>
+          <th data-key="category">Category / Module <span class="arrow">▾</span></th>
+          <th data-key="mode">Mode <span class="arrow">▾</span></th>
+          <th data-key="command">Command <span class="arrow">▾</span></th>
+          <th data-key="description">Description <span class="arrow">▾</span></th>
+          <th data-key="example">Example Usage <span class="arrow">▾</span></th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+      </tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="glyph">// no match</div>
+      <div class="msg">No commands match your search.</div>
+      <div class="hint">Try a broader term, or reset filters above.</div>
+    </div>
+  </div>
+</main>
+
+<section class="examples">
+  <h2>Configuration and Output Examples</h2>
+  <p>Practical snippets covering switch, routing, and firewall verification.</p>
+  <div class="example-grid">
+    <article class="example-card">
+      <h3>OSPF + Interface Baseline</h3>
+      <pre>router ospf 10
+ network 10.10.10.0 0.0.0.255 area 0
+!
+interface GigabitEthernet0/0
+ ip address 10.10.10.1 255.255.255.0
+ no shut</pre>
+    </article>
+    <article class="example-card">
+      <h3>Troubleshooting Output</h3>
+      <pre># show ip ospf neighbor
+Neighbor ID     Pri   State           Dead Time   Address
+10.10.10.2        1   FULL/DR         00:00:31    10.10.10.2
+
+# show interface status | include err-disabled</pre>
+    </article>
+  </div>
+</section>
+
+<footer>
+  <span id="footerCount">Loading commands…</span>
+  <span>Sort: click a column header · <span class="kbd">/</span> to focus search · Copyright Artan V.</span>
+</footer>
+
+<div class="credit">
+  Built for network engineers · <span>&copy; <span id="creditYear"></span> Artan V.</span> · All rights reserved
+</div>
+
+<script id="data-source" type="application/json">
+[{"device": "Switch", "category": "Basic Config", "mode": "Global Config", "command": "hostname [name]", "description": "Sets the device hostname", "example": "hostname SW-Core-01"}, {"device": "Switch", "category": "Basic Config", "mode": "Global Config", "command": "enable secret [password]", "description": "Sets encrypted privileged EXEC password", "example": "enable secret Cisco123!"}, {"device": "Switch", "category": "Basic Config", "mode": "Global Config", "command": "service password-encryption", "description": "Encrypts all plaintext passwords in config", "example": "service password-encryption"}, {"device": "Switch", "category": "Basic Config", "mode": "Global Config", "command": "banner motd # [message] #", "description": "Sets a login banner message", "example": "banner motd # Authorized Access Only #"}, {"device": "Switch", "category": "VLANs", "mode": "Global Config", "command": "vlan [vlan-id]", "description": "Creates a VLAN and enters VLAN config mode", "example": "vlan 10"}, {"device": "Switch", "category": "VLANs", "mode": "VLAN Config", "command": "name [vlan-name]", "description": "Assigns a name to the current VLAN", "example": "name Sales_Dept"}, {"device": "Switch", "category": "VLANs", "mode": "Interface Config", "command": "switchport mode access", "description": "Sets port to access mode", "example": "switchport mode access"}, {"device": "Switch", "category": "VLANs", "mode": "Interface Config", "command": "switchport access vlan [vlan-id]", "description": "Assigns port to a specific VLAN", "example": "switchport access vlan 10"}, {"device": "Switch", "category": "VLANs", "mode": "Interface Config", "command": "switchport mode trunk", "description": "Sets port to trunk mode", "example": "switchport mode trunk"}, {"device": "Switch", "category": "VLANs", "mode": "Interface Config", "command": "switchport trunk allowed vlan [vlan-list]", "description": "Restricts VLANs allowed on trunk", "example": "switchport trunk allowed vlan 10-20"}, {"device": "Switch", "category": "VLANs", "mode": "Interface Config", "command": "switchport trunk native vlan [vlan-id]", "description": "Sets the native VLAN for trunk", "example": "switchport trunk native vlan 99"}, {"device": "Switch", "category": "VTP", "mode": "Global Config", "command": "vtp mode [server|client|transparent]", "description": "Sets the VTP operating mode", "example": "vtp mode transparent"}, {"device": "Switch", "category": "VTP", "mode": "Global Config", "command": "vtp domain [domain-name]", "description": "Configures the VTP domain name", "example": "vtp domain CorpNet"}, {"device": "Switch", "category": "Spanning Tree", "mode": "Global Config", "command": "spanning-tree mode [pvst|rapid-pvst|mst]", "description": "Sets the spanning tree protocol version", "example": "spanning-tree mode rapid-pvst"}, {"device": "Switch", "category": "Spanning Tree", "mode": "Global Config", "command": "spanning-tree vlan [vlan-id] root primary", "description": "Forces switch to become root bridge", "example": "spanning-tree vlan 10 root primary"}, {"device": "Switch", "category": "Spanning Tree", "mode": "Interface Config", "command": "spanning-tree portfast", "description": "Enables immediate forwarding on access ports", "example": "spanning-tree portfast"}, {"device": "Switch", "category": "Spanning Tree", "mode": "Interface Config", "command": "spanning-tree bpduguard enable", "description": "Disables port if BPDU is received", "example": "spanning-tree bpduguard enable"}, {"device": "Switch", "category": "EtherChannel", "mode": "Interface Config", "command": "channel-group [number] mode [active|passive|on]", "description": "Adds interface to a port-channel", "example": "channel-group 1 mode active"}, {"device": "Switch", "category": "Interface Config", "mode": "Interface Config", "command": "interface [type][number]", "description": "Enters interface configuration mode", "example": "interface gigabitEthernet 0/1"}, {"device": "Switch", "category": "Interface Config", "mode": "Interface Config", "command": "description [text]", "description": "Adds a description to an interface", "example": "description Uplink_to_Core"}, {"device": "Switch", "category": "Interface Config", "mode": "Interface Config", "command": "no shutdown", "description": "Enables (brings up) the interface", "example": "no shutdown"}, {"device": "Switch", "category": "Interface Config", "mode": "Interface Config", "command": "speed [10|100|1000|auto]", "description": "Sets interface speed", "example": "speed auto"}, {"device": "Switch", "category": "Interface Config", "mode": "Interface Config", "command": "duplex [half|full|auto]", "description": "Sets interface duplex mode", "example": "duplex full"}, {"device": "Switch", "category": "Security", "mode": "Interface Config", "command": "switchport port-security", "description": "Enables port security on interface", "example": "switchport port-security"}, {"device": "Switch", "category": "Security", "mode": "Interface Config", "command": "switchport port-security maximum [number]", "description": "Sets max allowed MAC addresses", "example": "switchport port-security maximum 2"}, {"device": "Switch", "category": "Security", "mode": "Interface Config", "command": "switchport port-security violation [protect|restrict|shutdown]", "description": "Defines action on violation", "example": "switchport port-security violation shutdown"}, {"device": "Switch", "category": "Security", "mode": "Interface Config", "command": "switchport port-security mac-address sticky", "description": "Dynamically learns and sticks MAC addresses", "example": "switchport port-security mac-address sticky"}, {"device": "Switch", "category": "Layer 3", "mode": "Global Config", "command": "ip routing", "description": "Enables IP routing on a multilayer switch", "example": "ip routing"}, {"device": "Switch", "category": "Layer 3", "mode": "Interface Config", "command": "no switchport", "description": "Converts a switch port to a routed port", "example": "no switchport"}, {"device": "Switch", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show vlan brief", "description": "Displays VLAN to port assignments", "example": "show vlan brief"}, {"device": "Switch", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show interfaces trunk", "description": "Displays trunk port status and allowed VLANs", "example": "show interfaces trunk"}, {"device": "Switch", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show spanning-tree", "description": "Displays spanning tree status per VLAN", "example": "show spanning-tree vlan 10"}, {"device": "Switch", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show mac address-table", "description": "Displays learned MAC addresses", "example": "show mac address-table dynamic"}, {"device": "Router", "category": "Basic Config", "mode": "Global Config", "command": "interface [type][number]", "description": "Enters interface configuration mode", "example": "interface gigabitEthernet 0/0"}, {"device": "Router", "category": "Basic Config", "mode": "Interface Config", "command": "ip address [ip-address] [subnet-mask]", "description": "Assigns an IP address to an interface", "example": "ip address 192.168.1.1 255.255.255.0"}, {"device": "Router", "category": "Routing Protocols", "mode": "Global Config", "command": "router ospf [process-id]", "description": "Enables OSPF routing process", "example": "router ospf 1"}, {"device": "Router", "category": "Routing Protocols", "mode": "Router Config", "command": "network [network-address] [wildcard-mask] area [area-id]", "description": "Advertises networks into OSPF area", "example": "network 192.168.1.0 0.0.0.255 area 0"}, {"device": "Router", "category": "Routing Protocols", "mode": "Global Config", "command": "router eigrp [as-number]", "description": "Enables EIGRP routing process", "example": "router eigrp 100"}, {"device": "Router", "category": "Routing Protocols", "mode": "Router Config", "command": "network [network-address] [wildcard-mask]", "description": "Advertises networks into EIGRP", "example": "network 10.0.0.0 0.255.255.255"}, {"device": "Router", "category": "Routing Protocols", "mode": "Global Config", "command": "router bgp [as-number]", "description": "Enables BGP routing process", "example": "router bgp 65001"}, {"device": "Router", "category": "Routing Protocols", "mode": "Router Config", "command": "neighbor [ip-address] remote-as [as-number]", "description": "Defines a BGP neighbor", "example": "neighbor 203.0.113.2 remote-as 65002"}, {"device": "Router", "category": "Static Routing", "mode": "Global Config", "command": "ip route [dest-network] [subnet-mask] [next-hop]", "description": "Configures a static route", "example": "ip route 0.0.0.0 0.0.0.0 203.0.113.1"}, {"device": "Router", "category": "DHCP", "mode": "Global Config", "command": "ip dhcp pool [pool-name]", "description": "Creates a DHCP address pool", "example": "ip dhcp pool LAN-POOL"}, {"device": "Router", "category": "DHCP", "mode": "DHCP Config", "command": "network [network-address] [subnet-mask]", "description": "Defines the DHCP scope network", "example": "network 192.168.1.0 255.255.255.0"}, {"device": "Router", "category": "DHCP", "mode": "DHCP Config", "command": "default-router [ip-address]", "description": "Sets default gateway for DHCP clients", "example": "default-router 192.168.1.1"}, {"device": "Router", "category": "NAT", "mode": "Global Config", "command": "ip nat inside source list [acl] interface [type][number] overload", "description": "Configures PAT (NAT overload)", "example": "ip nat inside source list 1 interface GigabitEthernet0/0 overload"}, {"device": "Router", "category": "NAT", "mode": "Interface Config", "command": "ip nat inside", "description": "Marks interface as NAT inside", "example": "ip nat inside"}, {"device": "Router", "category": "NAT", "mode": "Interface Config", "command": "ip nat outside", "description": "Marks interface as NAT outside", "example": "ip nat outside"}, {"device": "Router", "category": "ACLs", "mode": "Global Config", "command": "access-list [number] [permit|deny] [source] [wildcard]", "description": "Creates a standard numbered ACL", "example": "access-list 10 permit 192.168.1.0 0.0.0.255"}, {"device": "Router", "category": "ACLs", "mode": "Global Config", "command": "ip access-list extended [name]", "description": "Creates a named extended ACL", "example": "ip access-list extended BLOCK_TELNET"}, {"device": "Router", "category": "ACLs", "mode": "Interface Config", "command": "ip access-group [name|number] [in|out]", "description": "Applies ACL to interface", "example": "ip access-group 10 in"}, {"device": "Router", "category": "VPN", "mode": "Global Config", "command": "crypto isakmp policy [priority]", "description": "Defines IKE Phase 1 policy", "example": "crypto isakmp policy 10"}, {"device": "Router", "category": "VPN", "mode": "Global Config", "command": "crypto ipsec transform-set [name] [transform]", "description": "Defines IPsec transform set for Phase 2", "example": "crypto ipsec transform-set MYSET esp-aes esp-sha-hmac"}, {"device": "Router", "category": "HSRP", "mode": "Interface Config", "command": "standby [group] ip [ip-address]", "description": "Configures HSRP virtual IP", "example": "standby 1 ip 192.168.1.254"}, {"device": "Router", "category": "HSRP", "mode": "Interface Config", "command": "standby [group] priority [value]", "description": "Sets HSRP priority for active router election", "example": "standby 1 priority 110"}, {"device": "Router", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show ip route", "description": "Displays the routing table", "example": "show ip route"}, {"device": "Router", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show ip interface brief", "description": "Displays interface IP and status summary", "example": "show ip interface brief"}, {"device": "Router", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show ip protocols", "description": "Displays active routing protocol details", "example": "show ip protocols"}, {"device": "Router", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "debug ip routing", "description": "Displays real-time routing table updates", "example": "debug ip routing"}, {"device": "Router", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show ip ospf neighbor", "description": "Displays OSPF neighbor adjacency status", "example": "show ip ospf neighbor"}, {"device": "Firewall (ASA/FTD)", "category": "Basic Config", "mode": "Global Config", "command": "hostname [name]", "description": "Sets the ASA hostname", "example": "hostname ASA-Edge-01"}, {"device": "Firewall (ASA/FTD)", "category": "Basic Config", "mode": "Global Config", "command": "enable password [password]", "description": "Sets the privileged EXEC password", "example": "enable password Cisco123!"}, {"device": "Firewall (ASA/FTD)", "category": "Interface Config", "mode": "Interface Config", "command": "nameif [interface-name]", "description": "Names a security zone interface", "example": "nameif outside"}, {"device": "Firewall (ASA/FTD)", "category": "Interface Config", "mode": "Interface Config", "command": "security-level [0-100]", "description": "Sets interface trust level", "example": "security-level 100"}, {"device": "Firewall (ASA/FTD)", "category": "Interface Config", "mode": "Interface Config", "command": "ip address [ip-address] [subnet-mask]", "description": "Assigns IP address to an interface", "example": "ip address 203.0.113.5 255.255.255.0"}, {"device": "Firewall (ASA/FTD)", "category": "NAT", "mode": "Global Config", "command": "object network [name]", "description": "Creates a network object for NAT/ACL use", "example": "object network INSIDE_NET"}, {"device": "Firewall (ASA/FTD)", "category": "NAT", "mode": "Object Config", "command": "subnet [network] [mask]", "description": "Defines subnet within a network object", "example": "subnet 192.168.1.0 255.255.255.0"}, {"device": "Firewall (ASA/FTD)", "category": "NAT", "mode": "Object Config", "command": "nat (inside,outside) dynamic interface", "description": "Configures dynamic PAT for the object", "example": "nat (inside,outside) dynamic interface"}, {"device": "Firewall (ASA/FTD)", "category": "Security", "mode": "Global Config", "command": "access-list [name] extended [permit|deny] [protocol] [source] [dest]", "description": "Creates an extended ACL entry", "example": "access-list OUTSIDE_IN extended permit tcp any host 203.0.113.5 eq 443"}, {"device": "Firewall (ASA/FTD)", "category": "Security", "mode": "Global Config", "command": "access-group [acl-name] in interface [interface-name]", "description": "Applies ACL to an interface", "example": "access-group OUTSIDE_IN in interface outside"}, {"device": "Firewall (ASA/FTD)", "category": "High Availability", "mode": "Global Config", "command": "failover", "description": "Enables failover feature", "example": "failover"}, {"device": "Firewall (ASA/FTD)", "category": "High Availability", "mode": "Global Config", "command": "failover lan unit [primary|secondary]", "description": "Sets failover role of the unit", "example": "failover lan unit primary"}, {"device": "Firewall (ASA/FTD)", "category": "High Availability", "mode": "Global Config", "command": "failover link [name] [interface]", "description": "Configures the failover communication link", "example": "failover link FOVER GigabitEthernet0/3"}, {"device": "Firewall (ASA/FTD)", "category": "VPN", "mode": "Global Config", "command": "crypto ikev2 policy [priority]", "description": "Defines IKEv2 policy for site-to-site VPN", "example": "crypto ikev2 policy 1"}, {"device": "Firewall (ASA/FTD)", "category": "VPN", "mode": "Global Config", "command": "tunnel-group [ip-address] type ipsec-l2l", "description": "Creates a site-to-site VPN tunnel group", "example": "tunnel-group 203.0.113.2 type ipsec-l2l"}, {"device": "Firewall (ASA/FTD)", "category": "Object Groups", "mode": "Global Config", "command": "object-group service [name] [tcp|udp]", "description": "Creates a reusable service object group", "example": "object-group service WEB_PORTS tcp"}, {"device": "Firewall (ASA/FTD)", "category": "Object Groups", "mode": "Object-Group Config", "command": "port-object eq [port]", "description": "Adds a port to a service object group", "example": "port-object eq 443"}, {"device": "Firewall (ASA/FTD)", "category": "Routing", "mode": "Global Config", "command": "route [interface-name] [network] [mask] [next-hop]", "description": "Configures a static route", "example": "route outside 0.0.0.0 0.0.0.0 203.0.113.1"}, {"device": "Firewall (ASA/FTD)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show running-config", "description": "Displays the active configuration", "example": "show running-config"}, {"device": "Firewall (ASA/FTD)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show nat", "description": "Displays configured NAT rules and hit counts", "example": "show nat"}, {"device": "Firewall (ASA/FTD)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show access-list", "description": "Displays ACL entries and hit counts", "example": "show access-list OUTSIDE_IN"}, {"device": "Firewall (ASA/FTD)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show failover", "description": "Displays failover state and status", "example": "show failover"}, {"device": "Firewall (ASA/FTD)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "packet-tracer input [interface] [protocol] [source] [source-port] [dest] [dest-port]", "description": "Simulates a packet to test policy path", "example": "packet-tracer input inside tcp 192.168.1.10 12345 8.8.8.8 443"}, {"device": "WLC", "category": "Basic Config", "mode": "Privileged EXEC", "command": "config wlan create [wlan-id] [profile-name] [ssid]", "description": "Creates a new WLAN profile", "example": "config wlan create 1 Corp-WiFi Corp-WiFi"}, {"device": "WLC", "category": "Basic Config", "mode": "Privileged EXEC", "command": "config wlan enable [wlan-id]", "description": "Enables a configured WLAN", "example": "config wlan enable 1"}, {"device": "WLC", "category": "Security", "mode": "Privileged EXEC", "command": "config wlan security wpa wpa2 enable [wlan-id]", "description": "Enables WPA2 security on a WLAN", "example": "config wlan security wpa wpa2 enable 1"}, {"device": "WLC", "category": "Interfaces", "mode": "Privileged EXEC", "command": "config interface address dynamic-interface [name] [ip] [mask] [gateway]", "description": "Configures a dynamic interface (VLAN)", "example": "config interface address dynamic-interface Corp-VLAN 192.168.20.10 255.255.255.0 192.168.20.1"}, {"device": "WLC", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show wlan summary", "description": "Displays a summary of all configured WLANs", "example": "show wlan summary"}, {"device": "WLC", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show client summary", "description": "Displays a summary of all connected clients", "example": "show client summary"}, {"device": "Switch (Nexus)", "category": "Feature Management", "mode": "Global Config", "command": "feature [feature-name]", "description": "Enables a licensed NX-OS feature module", "example": "feature interface-vlan"}, {"device": "Switch (Nexus)", "category": "Feature Management", "mode": "Global Config", "command": "feature lacp", "description": "Enables LACP for port-channel negotiation", "example": "feature lacp"}, {"device": "Switch (Nexus)", "category": "Feature Management", "mode": "Global Config", "command": "feature vpc", "description": "Enables Virtual Port-Channel feature", "example": "feature vpc"}, {"device": "Switch (Nexus)", "category": "Feature Management", "mode": "Global Config", "command": "feature ospf", "description": "Enables OSPF routing feature", "example": "feature ospf"}, {"device": "Switch (Nexus)", "category": "VDC", "mode": "Global Config", "command": "vdc [vdc-name]", "description": "Creates a Virtual Device Context", "example": "vdc PROD-VDC"}, {"device": "Switch (Nexus)", "category": "VRF", "mode": "Global Config", "command": "vrf context [vrf-name]", "description": "Creates a VRF instance for route separation", "example": "vrf context CUSTOMER_A"}, {"device": "Switch (Nexus)", "category": "VRF", "mode": "Interface Config", "command": "vrf member [vrf-name]", "description": "Assigns interface to a VRF", "example": "vrf member CUSTOMER_A"}, {"device": "Switch (Nexus)", "category": "VPC", "mode": "Global Config", "command": "vpc domain [domain-id]", "description": "Creates a VPC domain for dual-homed switching", "example": "vpc domain 10"}, {"device": "Switch (Nexus)", "category": "VPC", "mode": "VPC Domain Config", "command": "peer-keepalive destination [ip-address]", "description": "Sets VPC peer keepalive link target", "example": "peer-keepalive destination 10.10.10.2"}, {"device": "Switch (Nexus)", "category": "VPC", "mode": "Interface Config", "command": "vpc [port-channel-number]", "description": "Assigns a port-channel as a VPC member", "example": "vpc 100"}, {"device": "Switch (Nexus)", "category": "VPC", "mode": "Interface Config", "command": "vpc peer-link", "description": "Designates interface as the VPC peer link", "example": "vpc peer-link"}, {"device": "Switch (Nexus)", "category": "Port-Channel", "mode": "Global Config", "command": "interface port-channel [number]", "description": "Creates a logical port-channel interface", "example": "interface port-channel 100"}, {"device": "Switch (Nexus)", "category": "Port-Channel", "mode": "Interface Config", "command": "channel-group [number] mode active", "description": "Adds physical interface to port-channel via LACP", "example": "channel-group 100 mode active"}, {"device": "Switch (Nexus)", "category": "VXLAN", "mode": "Global Config", "command": "feature nv overlay", "description": "Enables Network Virtualization Overlay feature", "example": "feature nv overlay"}, {"device": "Switch (Nexus)", "category": "VXLAN", "mode": "Global Config", "command": "interface nve [number]", "description": "Creates a Network Virtualization Edge interface", "example": "interface nve 1"}, {"device": "Switch (Nexus)", "category": "VXLAN", "mode": "NVE Interface Config", "command": "source-interface loopback [number]", "description": "Sets source loopback for VXLAN tunnel endpoint", "example": "source-interface loopback 0"}, {"device": "Switch (Nexus)", "category": "VXLAN", "mode": "NVE Interface Config", "command": "member vni [vni-id]", "description": "Maps a VXLAN Network Identifier to the NVE", "example": "member vni 10010"}, {"device": "Switch (Nexus)", "category": "BGP EVPN", "mode": "Global Config", "command": "router bgp [as-number]", "description": "Enables BGP process for EVPN control plane", "example": "router bgp 65010"}, {"device": "Switch (Nexus)", "category": "BGP EVPN", "mode": "Router Config", "command": "address-family l2vpn evpn", "description": "Enters EVPN address family configuration", "example": "address-family l2vpn evpn"}, {"device": "Switch (Nexus)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show vpc", "description": "Displays VPC status and consistency checks", "example": "show vpc brief"}, {"device": "Switch (Nexus)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show port-channel summary", "description": "Displays port-channel member status", "example": "show port-channel summary"}, {"device": "Switch (Nexus)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show nve peers", "description": "Displays VXLAN NVE peer status", "example": "show nve peers"}, {"device": "Switch (Nexus)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show feature", "description": "Lists enabled and disabled NX-OS features", "example": "show feature"}, {"device": "Switch (Nexus)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show interface status", "description": "Displays a summary of all interface states", "example": "show interface status"}, {"device": "ISE", "category": "Basic Config", "mode": "Web UI/CLI", "command": "application configure ise", "description": "Launches ISE application maintenance menu via CLI", "example": "application configure ise"}, {"device": "ISE", "category": "Basic Config", "mode": "CLI EXEC", "command": "show application status ise", "description": "Displays status of all ISE services and processes", "example": "show application status ise"}, {"device": "ISE", "category": "Network Access", "mode": "Web UI (Policy)", "command": "Add Network Device", "description": "Registers a switch/WLC as a AAA client with shared secret", "example": "Add NAD 10.1.1.1 with shared secret Cisco123"}, {"device": "ISE", "category": "Authentication", "mode": "Web UI (Policy)", "command": "Policy > Policy Sets", "description": "Defines authentication policy sets for 802.1X or MAB", "example": "Create Policy Set for Wired_802.1X"}, {"device": "ISE", "category": "Authorization", "mode": "Web UI (Policy)", "command": "Policy > Authorization Profiles", "description": "Defines VLAN/ACL/SGT returned after successful auth", "example": "Create Profile assigning VLAN 20"}, {"device": "ISE", "category": "TrustSec", "mode": "Web UI (Policy)", "command": "Work Centers > TrustSec > SGT", "description": "Creates a Security Group Tag for segmentation", "example": "Create SGT Employees with tag 10"}, {"device": "ISE", "category": "Troubleshooting", "mode": "Web UI (Operations)", "command": "Operations > RADIUS > Live Logs", "description": "Displays real-time authentication attempts and results", "example": "Filter Live Logs by endpoint MAC address"}, {"device": "ISE", "category": "Troubleshooting", "mode": "CLI EXEC", "command": "show logging application", "description": "Displays ISE application-level log files", "example": "show logging application prrt-server.log"}, {"device": "Switch/Router", "category": "ISE Integration", "mode": "Global Config", "command": "aaa new-model", "description": "Enables AAA authentication framework on the device", "example": "aaa new-model"}, {"device": "Switch/Router", "category": "ISE Integration", "mode": "Global Config", "command": "radius server [name]", "description": "Defines a RADIUS server for ISE communication", "example": "radius server ISE-PSN1"}, {"device": "Switch/Router", "category": "ISE Integration", "mode": "RADIUS Server Config", "command": "address ipv4 [ip-address] auth-port [port] acct-port [port]", "description": "Sets ISE server IP and RADIUS ports", "example": "address ipv4 10.1.1.50 auth-port 1812 acct-port 1813"}, {"device": "Switch/Router", "category": "ISE Integration", "mode": "Global Config", "command": "dot1x system-auth-control", "description": "Enables 802.1X globally on the device", "example": "dot1x system-auth-control"}, {"device": "Switch/Router", "category": "ISE Integration", "mode": "Interface Config", "command": "authentication port-control auto", "description": "Enables port-based authentication control", "example": "authentication port-control auto"}, {"device": "Switch/Router", "category": "ISE Integration", "mode": "Interface Config", "command": "mab", "description": "Enables MAC Authentication Bypass on the port", "example": "mab"}, {"device": "DNA Center", "category": "Basic Config", "mode": "Web UI", "command": "Design > Network Hierarchy", "description": "Defines sites buildings and floors for network design", "example": "Create Site HQ-Building1-Floor2"}, {"device": "DNA Center", "category": "Provisioning", "mode": "Web UI", "command": "Provision > Devices", "description": "Assigns and pushes configuration templates to devices", "example": "Provision Switch to Site HQ-Building1"}, {"device": "DNA Center", "category": "Templates", "mode": "Web UI (Template Editor)", "command": "Design > Network Profiles > Templates", "description": "Creates a Jinja2-based CLI configuration template", "example": "Template: interface vlan $vlan_id"}, {"device": "DNA Center", "category": "SD-Access", "mode": "Web UI (Fabric)", "command": "Provision > Fabric Sites", "description": "Defines and configures an SD-Access fabric domain", "example": "Create Fabric Site Campus-Fabric-1"}, {"device": "DNA Center", "category": "SD-Access", "mode": "Web UI (Fabric)", "command": "Add Fabric Border/Edge/Control Node", "description": "Assigns fabric roles to physical devices", "example": "Assign Switch1 as Fabric Edge Node"}, {"device": "DNA Center", "category": "Assurance", "mode": "Web UI", "command": "Assurance > Health Dashboard", "description": "Displays real-time network client and device health scores", "example": "Review Client Health Score below 7"}, {"device": "DNA Center", "category": "Command Runner", "mode": "Web UI (Tools)", "command": "Tools > Command Runner", "description": "Executes read-only show commands across multiple devices", "example": "Run show version on all Access Switches"}, {"device": "DNA Center", "category": "API", "mode": "REST API (Postman/cURL)", "command": "GET /dna/intent/api/v1/network-device", "description": "Retrieves inventory of all managed network devices via API", "example": "curl -X GET https://dnac/dna/intent/api/v1/network-device"}, {"device": "DNA Center", "category": "Troubleshooting", "mode": "Web UI", "command": "Assurance > Path Trace", "description": "Traces and visualizes the path between two endpoints", "example": "Path Trace from Client_A to Server_B"}, {"device": "Switch", "category": "Security Hardening", "mode": "Global Config", "command": "line vty 0 15", "description": "Enters config mode for all VTY (remote) lines", "example": "line vty 0 15"}, {"device": "Switch", "category": "Security Hardening", "mode": "Line Config", "command": "transport input ssh", "description": "Restricts remote access to SSH only (disables Telnet)", "example": "transport input ssh"}, {"device": "Switch", "category": "Security Hardening", "mode": "Global Config", "command": "crypto key generate rsa modulus [bits]", "description": "Generates RSA keys required for SSH", "example": "crypto key generate rsa modulus 2048"}, {"device": "Switch", "category": "Security Hardening", "mode": "Global Config", "command": "ip ssh version 2", "description": "Forces SSH protocol version 2 only", "example": "ip ssh version 2"}, {"device": "Switch", "category": "Security Hardening", "mode": "Global Config", "command": "aaa authentication login default group tacacs+ local", "description": "Sets login auth to TACACS+ with local fallback", "example": "aaa authentication login default group tacacs+ local"}, {"device": "Switch", "category": "Security Hardening", "mode": "Global Config", "command": "aaa authorization exec default group tacacs+ local", "description": "Requires authorization for privileged EXEC access", "example": "aaa authorization exec default group tacacs+ local"}, {"device": "Switch", "category": "Security Hardening", "mode": "Global Config", "command": "ip dhcp snooping", "description": "Enables DHCP snooping globally", "example": "ip dhcp snooping"}, {"device": "Switch", "category": "Security Hardening", "mode": "Global Config", "command": "ip dhcp snooping vlan [vlan-list]", "description": "Enables DHCP snooping for specific VLANs", "example": "ip dhcp snooping vlan 10,20"}, {"device": "Switch", "category": "Security Hardening", "mode": "Interface Config", "command": "ip dhcp snooping trust", "description": "Marks uplink port as trusted for DHCP snooping", "example": "ip dhcp snooping trust"}, {"device": "Switch", "category": "Security Hardening", "mode": "Global Config", "command": "ip arp inspection vlan [vlan-list]", "description": "Enables Dynamic ARP Inspection on VLANs", "example": "ip arp inspection vlan 10,20"}, {"device": "Switch", "category": "Security Hardening", "mode": "Interface Config", "command": "ip arp inspection trust", "description": "Marks port as trusted for ARP inspection", "example": "ip arp inspection trust"}, {"device": "Switch", "category": "Security Hardening", "mode": "Global Config", "command": "no ip domain-lookup", "description": "Prevents device from attempting DNS lookups on typos", "example": "no ip domain-lookup"}, {"device": "Switch", "category": "Security Hardening", "mode": "Global Config", "command": "no cdp run", "description": "Disables CDP globally for security", "example": "no cdp run"}, {"device": "Switch", "category": "Private VLANs", "mode": "VLAN Config", "command": "private-vlan isolated", "description": "Configures VLAN as an isolated private VLAN", "example": "private-vlan isolated"}, {"device": "Switch", "category": "Private VLANs", "mode": "VLAN Config", "command": "private-vlan association [primary-vlan] [secondary-vlan]", "description": "Associates secondary PVLAN with primary", "example": "private-vlan association 100 101"}, {"device": "Switch", "category": "Private VLANs", "mode": "Interface Config", "command": "switchport mode private-vlan host", "description": "Sets port role for private VLAN host", "example": "switchport mode private-vlan host"}, {"device": "Switch", "category": "QoS", "mode": "Global Config", "command": "class-map [name]", "description": "Creates a traffic classification map", "example": "class-map VOICE-TRAFFIC"}, {"device": "Switch", "category": "QoS", "mode": "Class-Map Config", "command": "match [protocol|dscp|access-group] [value]", "description": "Defines match criteria for classification", "example": "match dscp ef"}, {"device": "Switch", "category": "QoS", "mode": "Global Config", "command": "policy-map [name]", "description": "Creates a QoS policy applying actions to classes", "example": "policy-map QOS-POLICY"}, {"device": "Switch", "category": "QoS", "mode": "Policy-Map Config", "command": "class [class-map-name]", "description": "Applies actions to a specific traffic class", "example": "class VOICE-TRAFFIC"}, {"device": "Switch", "category": "QoS", "mode": "Policy-Map Class Config", "command": "priority [bandwidth-kbps]", "description": "Assigns strict priority queuing to a class (voice)", "example": "priority 1000"}, {"device": "Switch", "category": "QoS", "mode": "Policy-Map Class Config", "command": "bandwidth [kbps]", "description": "Guarantees minimum bandwidth to a class", "example": "bandwidth 5000"}, {"device": "Switch", "category": "QoS", "mode": "Interface Config", "command": "service-policy [input|output] [policy-map-name]", "description": "Applies a QoS policy to an interface", "example": "service-policy output QOS-POLICY"}, {"device": "Switch", "category": "QoS", "mode": "Interface Config", "command": "mls qos trust [cos|dscp]", "description": "Configures interface to trust incoming markings", "example": "mls qos trust dscp"}, {"device": "Switch", "category": "Stacking", "mode": "Global Config", "command": "switch [number] priority [value]", "description": "Sets stack member priority for master election", "example": "switch 1 priority 15"}, {"device": "Switch", "category": "Stacking", "mode": "Privileged EXEC", "command": "show switch", "description": "Displays stack membership and roles", "example": "show switch"}, {"device": "Switch", "category": "IPv6", "mode": "Global Config", "command": "ipv6 unicast-routing", "description": "Enables IPv6 routing on the device", "example": "ipv6 unicast-routing"}, {"device": "Switch", "category": "IPv6", "mode": "Interface Config", "command": "ipv6 address [address/prefix]", "description": "Assigns an IPv6 address to an interface", "example": "ipv6 address 2001:db8:1::1/64"}, {"device": "Switch", "category": "Monitoring", "mode": "Global Config", "command": "snmp-server community [string] [ro|rw]", "description": "Configures SNMP community string and access", "example": "snmp-server community PublicRO ro"}, {"device": "Switch", "category": "Monitoring", "mode": "Global Config", "command": "snmp-server host [ip-address] version 2c [community]", "description": "Sets SNMP trap destination server", "example": "snmp-server host 10.1.1.100 version 2c PublicRO"}, {"device": "Switch", "category": "Monitoring", "mode": "Global Config", "command": "logging host [ip-address]", "description": "Sends syslog messages to a remote server", "example": "logging host 10.1.1.200"}, {"device": "Switch", "category": "Monitoring", "mode": "Global Config", "command": "ntp server [ip-address]", "description": "Configures NTP time synchronization source", "example": "ntp server 10.1.1.1"}, {"device": "Router", "category": "Security Hardening", "mode": "Global Config", "command": "service tcp-keepalives-in", "description": "Enables TCP keepalives to clear dead sessions", "example": "service tcp-keepalives-in"}, {"device": "Router", "category": "Security Hardening", "mode": "Line Config", "command": "exec-timeout [minutes] [seconds]", "description": "Sets idle timeout for console/VTY sessions", "example": "exec-timeout 5 0"}, {"device": "Router", "category": "Security Hardening", "mode": "Global Config", "command": "login block-for [seconds] attempts [tries] within [seconds]", "description": "Enables brute-force login protection", "example": "login block-for 120 attempts 3 within 60"}, {"device": "Router", "category": "Zone-Based Firewall", "mode": "Global Config", "command": "zone security [zone-name]", "description": "Creates a security zone for ZBFW", "example": "zone security OUTSIDE"}, {"device": "Router", "category": "Zone-Based Firewall", "mode": "Global Config", "command": "zone-pair security [name] source [zone] destination [zone]", "description": "Defines direction of traffic inspection between zones", "example": "zone-pair security IN-OUT source INSIDE destination OUTSIDE"}, {"device": "Router", "category": "Zone-Based Firewall", "mode": "Global Config", "command": "class-map type inspect [name]", "description": "Classifies traffic for firewall inspection policy", "example": "class-map type inspect match-any WEB-TRAFFIC"}, {"device": "Router", "category": "Zone-Based Firewall", "mode": "Global Config", "command": "policy-map type inspect [name]", "description": "Defines inspection actions (inspect/drop/pass)", "example": "policy-map type inspect IN-OUT-POLICY"}, {"device": "Router", "category": "Zone-Based Firewall", "mode": "Interface Config", "command": "zone-member security [zone-name]", "description": "Assigns interface to a security zone", "example": "zone-member security OUTSIDE"}, {"device": "Router", "category": "PBR", "mode": "Global Config", "command": "route-map [name] permit [sequence]", "description": "Creates a policy route-map entry", "example": "route-map PBR-MAP permit 10"}, {"device": "Router", "category": "PBR", "mode": "Route-Map Config", "command": "match ip address [acl-number]", "description": "Matches traffic defined by an ACL for PBR", "example": "match ip address 101"}, {"device": "Router", "category": "PBR", "mode": "Route-Map Config", "command": "set ip next-hop [ip-address]", "description": "Overrides routing table with specified next-hop", "example": "set ip next-hop 192.168.2.1"}, {"device": "Router", "category": "PBR", "mode": "Interface Config", "command": "ip policy route-map [name]", "description": "Applies the route-map to an interface", "example": "ip policy route-map PBR-MAP"}, {"device": "Router", "category": "QoS", "mode": "Global Config", "command": "policy-map [name]", "description": "Creates an MQC QoS policy (router-based)", "example": "policy-map WAN-QOS"}, {"device": "Router", "category": "QoS", "mode": "Policy-Map Class Config", "command": "shape average [bps]", "description": "Applies traffic shaping to limit output rate", "example": "shape average 10000000"}, {"device": "Router", "category": "QoS", "mode": "Policy-Map Class Config", "command": "police [bps] conform-action [action] exceed-action [action]", "description": "Applies traffic policing with conform/exceed actions", "example": "police 5000000 conform-action transmit exceed-action drop"}, {"device": "Router", "category": "GRE/DMVPN", "mode": "Global Config", "command": "interface tunnel [number]", "description": "Creates a logical GRE/DMVPN tunnel interface", "example": "interface tunnel 0"}, {"device": "Router", "category": "GRE/DMVPN", "mode": "Tunnel Interface Config", "command": "tunnel source [interface|ip-address]", "description": "Sets the tunnel's source interface or IP", "example": "tunnel source GigabitEthernet0/0"}, {"device": "Router", "category": "GRE/DMVPN", "mode": "Tunnel Interface Config", "command": "tunnel destination [ip-address]", "description": "Sets the tunnel's remote endpoint (point-to-point GRE)", "example": "tunnel destination 203.0.113.10"}, {"device": "Router", "category": "GRE/DMVPN", "mode": "Tunnel Interface Config", "command": "tunnel mode gre multipoint", "description": "Configures tunnel as mGRE for DMVPN hub", "example": "tunnel mode gre multipoint"}, {"device": "Router", "category": "GRE/DMVPN", "mode": "Tunnel Interface Config", "command": "ip nhrp authentication [key]", "description": "Sets NHRP authentication string for DMVPN", "example": "ip nhrp authentication DMVPN123"}, {"device": "Router", "category": "GRE/DMVPN", "mode": "Tunnel Interface Config", "command": "ip nhrp map multicast dynamic", "description": "Enables dynamic multicast mapping for spokes", "example": "ip nhrp map multicast dynamic"}, {"device": "Router", "category": "GRE/DMVPN", "mode": "Tunnel Interface Config", "command": "ip nhrp network-id [number]", "description": "Sets the NHRP network identifier for the DMVPN cloud", "example": "ip nhrp network-id 100"}, {"device": "Router", "category": "Site-to-Site VPN", "mode": "Global Config", "command": "crypto isakmp key [key] address [peer-ip]", "description": "Sets pre-shared key for IKEv1 Phase 1 with peer", "example": "crypto isakmp key MyKey123 address 203.0.113.2"}, {"device": "Router", "category": "Site-to-Site VPN", "mode": "Global Config", "command": "crypto map [name] [sequence] ipsec-isakmp", "description": "Creates a crypto map entry for IPsec VPN", "example": "crypto map VPN-MAP 10 ipsec-isakmp"}, {"device": "Router", "category": "Site-to-Site VPN", "mode": "Crypto Map Config", "command": "set peer [ip-address]", "description": "Sets the VPN peer's IP address in the crypto map", "example": "set peer 203.0.113.2"}, {"device": "Router", "category": "Site-to-Site VPN", "mode": "Crypto Map Config", "command": "set transform-set [name]", "description": "Applies the transform set to the crypto map", "example": "set transform-set MYSET"}, {"device": "Router", "category": "Site-to-Site VPN", "mode": "Crypto Map Config", "command": "match address [acl-number]", "description": "Defines interesting traffic to trigger the VPN tunnel", "example": "match address 101"}, {"device": "Router", "category": "Site-to-Site VPN", "mode": "Interface Config", "command": "crypto map [name]", "description": "Applies the crypto map to the outbound interface", "example": "crypto map VPN-MAP"}, {"device": "Router", "category": "Remote-Access VPN", "mode": "Global Config", "command": "crypto ikev2 profile [name]", "description": "Creates an IKEv2 profile for remote-access VPN", "example": "crypto ikev2 profile REMOTE-PROFILE"}, {"device": "Router", "category": "Remote-Access VPN", "mode": "Global Config", "command": "webvpn gateway [name]", "description": "Configures SSL VPN gateway for AnyConnect", "example": "webvpn gateway SSLVPN-GW"}, {"device": "Router", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show crypto isakmp sa", "description": "Displays IKE Phase 1 security association status", "example": "show crypto isakmp sa"}, {"device": "Router", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show crypto ipsec sa", "description": "Displays IPsec Phase 2 security association status", "example": "show crypto ipsec sa"}, {"device": "Router", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show dmvpn", "description": "Displays DMVPN tunnel and NHRP status", "example": "show dmvpn"}, {"device": "Firewall (ASA)", "category": "Remote-Access VPN", "mode": "Global Config", "command": "webvpn", "description": "Enters WebVPN/AnyConnect configuration mode", "example": "webvpn"}, {"device": "Firewall (ASA)", "category": "Remote-Access VPN", "mode": "WebVPN Config", "command": "enable [interface-name]", "description": "Enables AnyConnect on a specific interface", "example": "enable outside"}, {"device": "Firewall (ASA)", "category": "Remote-Access VPN", "mode": "WebVPN Config", "command": "anyconnect image [flash-path]", "description": "Uploads and references the AnyConnect client image", "example": "anyconnect image disk0:/anyconnect-win-4.10.pkg 1"}, {"device": "Firewall (ASA)", "category": "Remote-Access VPN", "mode": "Global Config", "command": "ip local pool [name] [start-ip]-[end-ip] mask [mask]", "description": "Creates an IP pool for VPN client addressing", "example": "ip local pool VPN-POOL 10.10.10.1-10.10.10.50 mask 255.255.255.0"}, {"device": "Firewall (ASA)", "category": "Remote-Access VPN", "mode": "Global Config", "command": "group-policy [name] internal", "description": "Creates an internal group policy for VPN users", "example": "group-policy VPN-USERS internal"}, {"device": "Firewall (ASA)", "category": "Remote-Access VPN", "mode": "Global Config", "command": "tunnel-group [name] type remote-access", "description": "Creates a remote-access tunnel group", "example": "tunnel-group VPN-USERS type remote-access"}, {"device": "Firewall (ASA)", "category": "Clustering", "mode": "Global Config", "command": "cluster group [name]", "description": "Creates an ASA clustering group for scaling/HA", "example": "cluster group ASA-CLUSTER"}, {"device": "Firewall (ASA)", "category": "Clustering", "mode": "Cluster Config", "command": "local-unit [unit-name]", "description": "Assigns a unique unit name within the cluster", "example": "local-unit unit-1"}, {"device": "Firewall (ASA)", "category": "Threat Detection", "mode": "Global Config", "command": "threat-detection basic-threat", "description": "Enables basic threat detection statistics", "example": "threat-detection basic-threat"}, {"device": "Firewall (ASA)", "category": "Threat Detection", "mode": "Global Config", "command": "threat-detection scanning-threat", "description": "Enables detection of host/port scanning behavior", "example": "threat-detection scanning-threat"}, {"device": "Firewall (FTD/FMC)", "category": "Device Registration", "mode": "FMC Web UI", "command": "Devices > Device Management > Add Device", "description": "Registers an FTD sensor to be managed by FMC", "example": "Add FTD 10.1.1.5 with registration key cisco123"}, {"device": "Firewall (FTD/FMC)", "category": "NAT", "mode": "FMC Web UI (Policy Editor)", "command": "Devices > NAT", "description": "Configures NAT rules via FMC's NAT policy editor", "example": "Create Auto NAT rule Inside_Net to Outside dynamic PAT"}, {"device": "Firewall (FTD/FMC)", "category": "Access Control", "mode": "FMC Web UI (Policy Editor)", "command": "Policies > Access Control > Access Control Policy", "description": "Defines the primary traffic-permit/deny rule base", "example": "Create rule Allow_Web permitting TCP 443 from Inside to Outside"}, {"device": "Firewall (FTD/FMC)", "category": "Intrusion Prevention", "mode": "FMC Web UI (Policy Editor)", "command": "Policies > Intrusion > Intrusion Policy", "description": "Assigns Snort-based IPS rule sets to traffic", "example": "Apply Balanced Security and Connectivity policy"}, {"device": "Firewall (FTD/FMC)", "category": "Malware/File Policy", "mode": "FMC Web UI (Policy Editor)", "command": "Policies > Access Control > Malware & File Policy", "description": "Configures file-type blocking and AMP malware lookup", "example": "Block file type EXE with Malware Cloud Lookup"}, {"device": "Firewall (FTD/FMC)", "category": "SSL Decryption", "mode": "FMC Web UI (Policy Editor)", "command": "Policies > Access Control > SSL", "description": "Configures SSL/TLS decrypt-and-inspect rules", "example": "Decrypt-Resign traffic to Outside_Zone"}, {"device": "Firewall (FTD/FMC)", "category": "Deployment", "mode": "FMC Web UI", "command": "Deploy > Deployment", "description": "Pushes pending policy changes to managed FTD devices", "example": "Deploy changes to FTD-Edge-01"}, {"device": "Firewall (FTD/FMC)", "category": "CLI (Diagnostic)", "mode": "FTD CLI (LINA)", "command": "system support diagnostic-cli", "description": "Drops from FTD CLI into classic ASA-style diagnostic CLI", "example": "system support diagnostic-cli"}, {"device": "Firewall (FTD/FMC)", "category": "Troubleshooting", "mode": "FTD CLI EXEC", "command": "show running-config", "description": "Displays FTD's LINA (data-plane) configuration", "example": "show running-config"}, {"device": "Firewall (FTD/FMC)", "category": "Troubleshooting", "mode": "FTD CLI EXEC", "command": "system support firewall-engine-debug", "description": "Runs real-time Snort engine debug for a connection", "example": "system support firewall-engine-debug"}, {"device": "Firewall (FTD/FMC)", "category": "Troubleshooting", "mode": "FMC Web UI", "command": "Analysis > Connections > Events", "description": "Displays logged connection events matching ACP rules", "example": "Filter events by Action = Block"}, {"device": "Switch/Router", "category": "AAA Command Auth", "mode": "Global Config", "command": "aaa authorization commands [level] default group tacacs+ local", "description": "Requires authorization for commands at a privilege level", "example": "aaa authorization commands 15 default group tacacs+ local"}, {"device": "Switch/Router", "category": "AAA Command Auth", "mode": "Global Config", "command": "aaa accounting commands [level] default start-stop group tacacs+", "description": "Logs all executed commands at a privilege level to TACACS+", "example": "aaa accounting commands 15 default start-stop group tacacs+"}, {"device": "Switch/Router", "category": "AAA Command Auth", "mode": "Global Config", "command": "aaa accounting exec default start-stop group tacacs+", "description": "Logs start/stop of EXEC sessions to TACACS+", "example": "aaa accounting exec default start-stop group tacacs+"}, {"device": "Switch/Router", "category": "AAA Command Auth", "mode": "Global Config", "command": "tacacs server [name]", "description": "Defines a TACACS+ server for AAA", "example": "tacacs server TACACS-01"}, {"device": "Switch/Router", "category": "AAA Command Auth", "mode": "TACACS Server Config", "command": "address ipv4 [ip-address]", "description": "Sets the TACACS+ server's IP address", "example": "address ipv4 10.1.1.60"}, {"device": "Switch/Router", "category": "AAA Command Auth", "mode": "TACACS Server Config", "command": "key [shared-secret]", "description": "Sets the shared secret key for TACACS+ authentication", "example": "key TacacsKey123"}, {"device": "Switch/Router", "category": "AAA Command Auth", "mode": "Global Config", "command": "privilege exec level [level] [command]", "description": "Assigns a specific command to a custom privilege level", "example": "privilege exec level 5 show running-config"}, {"device": "Switch/Router", "category": "AAA Command Auth", "mode": "Global Config", "command": "username [name] privilege [level] secret [password]", "description": "Creates local user with a specific privilege level", "example": "username helpdesk privilege 5 secret Help123!"}, {"device": "Switch/Router", "category": "AAA Command Auth", "mode": "Global Config", "command": "aaa authentication enable default group tacacs+ enable", "description": "Requires TACACS+ auth to enter privileged EXEC mode", "example": "aaa authentication enable default group tacacs+ enable"}, {"device": "Switch/Router", "category": "Role-Based Access", "mode": "Global Config", "command": "parser view [name]", "description": "Creates a CLI view restricting visible commands", "example": "parser view HELPDESK-VIEW"}, {"device": "Switch/Router", "category": "Role-Based Access", "mode": "Parser View Config", "command": "commands exec include [command]", "description": "Allows a specific command inside a CLI view", "example": "commands exec include show interfaces"}, {"device": "Switch/Router", "category": "Image Management", "mode": "Privileged EXEC", "command": "show flash:", "description": "Displays files stored in flash memory", "example": "show flash:"}, {"device": "Switch/Router", "category": "Image Management", "mode": "Privileged EXEC", "command": "show version", "description": "Displays current IOS version and hardware details", "example": "show version"}, {"device": "Switch/Router", "category": "Image Management", "mode": "Privileged EXEC", "command": "copy tftp: flash:", "description": "Copies an IOS image from a TFTP server into flash", "example": "copy tftp: flash:"}, {"device": "Switch/Router", "category": "Image Management", "mode": "Privileged EXEC", "command": "copy flash: tftp:", "description": "Backs up a file from flash to a TFTP server", "example": "copy flash: tftp:"}, {"device": "Switch/Router", "category": "Image Management", "mode": "Privileged EXEC", "command": "copy running-config startup-config", "description": "Saves the active configuration to NVRAM", "example": "copy running-config startup-config"}, {"device": "Switch/Router", "category": "Image Management", "mode": "Privileged EXEC", "command": "copy startup-config running-config", "description": "Merges the saved config into the running config", "example": "copy startup-config running-config"}, {"device": "Switch/Router", "category": "Image Management", "mode": "Global Config", "command": "boot system flash:[filename]", "description": "Sets which IOS image the device should boot from", "example": "boot system flash:c2960x-universalk9-mz.bin"}, {"device": "Switch/Router", "category": "Image Management", "mode": "Privileged EXEC", "command": "verify /md5 flash:[filename]", "description": "Verifies image integrity via MD5 checksum", "example": "verify /md5 flash:c2960x-universalk9-mz.bin"}, {"device": "Switch/Router", "category": "Image Management", "mode": "Privileged EXEC", "command": "delete flash:[filename]", "description": "Deletes a file from flash memory", "example": "delete flash:old-image.bin"}, {"device": "Switch/Router", "category": "Image Management", "mode": "Privileged EXEC", "command": "reload", "description": "Reboots the device (loads new boot image/config)", "example": "reload"}, {"device": "Switch/Router", "category": "Image Management", "mode": "Privileged EXEC", "command": "reload in [hh:mm]", "description": "Schedules a reload after a specified delay", "example": "reload in 00:30"}, {"device": "Switch/Router", "category": "Config Management", "mode": "Privileged EXEC", "command": "show archive config differences", "description": "Compares current running config to a saved archive", "example": "show archive config differences"}, {"device": "Switch/Router", "category": "Config Management", "mode": "Global Config", "command": "archive", "description": "Enters configuration archive mode", "example": "archive"}, {"device": "Switch/Router", "category": "Config Management", "mode": "Archive Config", "command": "path flash:/backup", "description": "Sets the storage path for config archives", "example": "path flash:/backup"}, {"device": "Switch/Router", "category": "Config Management", "mode": "Archive Config", "command": "write-memory", "description": "Automatically archives config on every write memory", "example": "write-memory"}, {"device": "Switch/Router", "category": "Password Recovery", "mode": "ROMMON", "command": "confreg 0x2142", "description": "Sets config register to skip startup-config on boot", "example": "confreg 0x2142"}, {"device": "Switch/Router", "category": "Password Recovery", "mode": "Privileged EXEC", "command": "config-register 0x2102", "description": "Restores normal boot config register value", "example": "config-register 0x2102"}, {"device": "Switch/Router", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show aaa servers", "description": "Displays status and stats for configured AAA servers", "example": "show aaa servers"}, {"device": "Switch/Router", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "test aaa group tacacs+ [username] [password] legacy", "description": "Tests AAA authentication against TACACS+ server", "example": "test aaa group tacacs+ jsmith Passw0rd legacy"}, {"device": "Switch/Router", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "debug aaa authentication", "description": "Displays real-time AAA authentication process", "example": "debug aaa authentication"}, {"device": "Router", "category": "Multicast", "mode": "Global Config", "command": "ip multicast-routing", "description": "Enables IP multicast routing globally", "example": "ip multicast-routing"}, {"device": "Router", "category": "Multicast", "mode": "Interface Config", "command": "ip pim sparse-mode", "description": "Enables PIM sparse mode on an interface", "example": "ip pim sparse-mode"}, {"device": "Router", "category": "Multicast", "mode": "Global Config", "command": "ip pim rp-address [ip-address]", "description": "Statically defines the Rendezvous Point for PIM-SM", "example": "ip pim rp-address 10.1.1.1"}, {"device": "Router", "category": "Multicast", "mode": "Interface Config", "command": "ip igmp version [1|2|3]", "description": "Sets the IGMP version used on an interface", "example": "ip igmp version 3"}, {"device": "Router", "category": "Multicast", "mode": "Privileged EXEC", "command": "show ip mroute", "description": "Displays the IP multicast routing table", "example": "show ip mroute"}, {"device": "Router", "category": "Multicast", "mode": "Privileged EXEC", "command": "show ip pim neighbor", "description": "Displays PIM neighbor adjacencies", "example": "show ip pim neighbor"}, {"device": "Router", "category": "IPv6 Routing", "mode": "Global Config", "command": "ipv6 unicast-routing", "description": "Enables IPv6 routing on the device", "example": "ipv6 unicast-routing"}, {"device": "Router", "category": "IPv6 Routing", "mode": "Global Config", "command": "ipv6 router ospf [process-id]", "description": "Enables OSPFv3 routing process for IPv6", "example": "ipv6 router ospf 1"}, {"device": "Router", "category": "IPv6 Routing", "mode": "Interface Config", "command": "ipv6 ospf [process-id] area [area-id]", "description": "Enables OSPFv3 on an interface for a given area", "example": "ipv6 ospf 1 area 0"}, {"device": "Router", "category": "IPv6 Routing", "mode": "Global Config", "command": "ipv6 router eigrp [as-number]", "description": "Enables EIGRP for IPv6 routing process", "example": "ipv6 router eigrp 100"}, {"device": "Router", "category": "IPv6 Routing", "mode": "Interface Config", "command": "ipv6 eigrp [as-number]", "description": "Enables EIGRPv6 on an interface", "example": "ipv6 eigrp 100"}, {"device": "Router", "category": "IPv6 Routing", "mode": "Global Config", "command": "ipv6 route [dest-prefix/length] [next-hop]", "description": "Configures a static IPv6 route", "example": "ipv6 route ::/0 2001:db8::1"}, {"device": "Router", "category": "IPv6 Routing", "mode": "Privileged EXEC", "command": "show ipv6 route", "description": "Displays the IPv6 routing table", "example": "show ipv6 route"}, {"device": "Router", "category": "IPv6 Routing", "mode": "Privileged EXEC", "command": "show ipv6 interface brief", "description": "Displays IPv6 address and interface status summary", "example": "show ipv6 interface brief"}, {"device": "Switch/Router", "category": "Diagnostics", "mode": "Privileged EXEC", "command": "show tech-support", "description": "Generates a comprehensive diagnostic snapshot for TAC", "example": "show tech-support"}, {"device": "Switch/Router", "category": "Diagnostics", "mode": "Privileged EXEC", "command": "show processes cpu sorted", "description": "Displays CPU utilization sorted by process load", "example": "show processes cpu sorted"}, {"device": "Switch/Router", "category": "Diagnostics", "mode": "Privileged EXEC", "command": "show memory statistics", "description": "Displays memory usage statistics by pool", "example": "show memory statistics"}, {"device": "Switch/Router", "category": "Diagnostics", "mode": "Privileged EXEC", "command": "show environment", "description": "Displays power supply fan and temperature status", "example": "show environment"}, {"device": "Switch/Router", "category": "Diagnostics", "mode": "Privileged EXEC", "command": "show logging", "description": "Displays the local system log buffer", "example": "show logging"}, {"device": "Switch/Router", "category": "Diagnostics", "mode": "Privileged EXEC", "command": "show interfaces counters errors", "description": "Displays per-interface error counters", "example": "show interfaces counters errors"}, {"device": "Switch/Router", "category": "Diagnostics", "mode": "Privileged EXEC", "command": "traceroute [destination]", "description": "Traces the Layer 3 path to a destination", "example": "traceroute 8.8.8.8"}, {"device": "Switch/Router", "category": "Diagnostics", "mode": "Privileged EXEC", "command": "ping [destination] source [interface]", "description": "Tests reachability using a specific source interface", "example": "ping 10.1.1.1 source Loopback0"}, {"device": "Switch/Router", "category": "Discovery Protocols", "mode": "Global Config", "command": "cdp run", "description": "Enables Cisco Discovery Protocol globally", "example": "cdp run"}, {"device": "Switch/Router", "category": "Discovery Protocols", "mode": "Interface Config", "command": "cdp enable", "description": "Enables CDP on a specific interface", "example": "cdp enable"}, {"device": "Switch/Router", "category": "Discovery Protocols", "mode": "Global Config", "command": "lldp run", "description": "Enables Link Layer Discovery Protocol globally", "example": "lldp run"}, {"device": "Switch/Router", "category": "Discovery Protocols", "mode": "Privileged EXEC", "command": "show cdp neighbors detail", "description": "Displays detailed CDP neighbor information", "example": "show cdp neighbors detail"}, {"device": "Switch/Router", "category": "Discovery Protocols", "mode": "Privileged EXEC", "command": "show lldp neighbors detail", "description": "Displays detailed LLDP neighbor information", "example": "show lldp neighbors detail"}, {"device": "Switch", "category": "Port Mirroring", "mode": "Global Config", "command": "monitor session [number] source interface [type][number]", "description": "Defines the SPAN source interface to mirror traffic from", "example": "monitor session 1 source interface Gi0/1"}, {"device": "Switch", "category": "Port Mirroring", "mode": "Global Config", "command": "monitor session [number] destination interface [type][number]", "description": "Defines the SPAN destination interface for captured traffic", "example": "monitor session 1 destination interface Gi0/24"}, {"device": "Switch/Router", "category": "Automation (EEM)", "mode": "Global Config", "command": "event manager applet [name]", "description": "Creates an Embedded Event Manager applet", "example": "event manager applet LINK-DOWN-ALERT"}, {"device": "Switch/Router", "category": "Automation (EEM)", "mode": "EEM Applet Config", "command": "event syslog pattern [pattern]", "description": "Triggers the EEM applet on a matching syslog message", "example": "event syslog pattern \"LINEPROTO-5-UPDOWN\""}, {"device": "Switch/Router", "category": "Automation (EEM)", "mode": "EEM Applet Config", "command": "action [number] syslog msg [message]", "description": "Defines an action the applet performs when triggered", "example": "action 1.0 syslog msg \"Interface state changed\""}, {"device": "Switch/Router", "category": "Automation (API)", "mode": "Global Config", "command": "netconf-yang", "description": "Enables the NETCONF/YANG agent on IOS-XE", "example": "netconf-yang"}, {"device": "Switch/Router", "category": "Automation (API)", "mode": "Global Config", "command": "restconf", "description": "Enables the RESTCONF API on IOS-XE", "example": "restconf"}, {"device": "Switch/Router", "category": "Licensing", "mode": "Privileged EXEC", "command": "show license summary", "description": "Displays current Smart Licensing status and usage", "example": "show license summary"}, {"device": "Switch/Router", "category": "Licensing", "mode": "Privileged EXEC", "command": "license smart register idtoken [token]", "description": "Registers the device to Cisco Smart Licensing", "example": "license smart register idtoken NjA5..."}, {"device": "Switch/Router", "category": "IOS-XE Upgrade", "mode": "Privileged EXEC", "command": "install add file [path] activate commit", "description": "Installs and activates a new IOS-XE image in one step", "example": "install add file bootflash:cat9k.bin activate commit"}, {"device": "Switch/Router", "category": "IOS-XE Upgrade", "mode": "Privileged EXEC", "command": "show install summary", "description": "Displays the current install state of IOS-XE packages", "example": "show install summary"}, {"device": "Switch/Router", "category": "NetFlow", "mode": "Global Config", "command": "flow record [name]", "description": "Creates a custom NetFlow flow record definition", "example": "flow record MY-RECORD"}, {"device": "Switch/Router", "category": "NetFlow", "mode": "Global Config", "command": "flow exporter [name]", "description": "Defines a NetFlow collector destination", "example": "flow exporter MY-EXPORTER"}, {"device": "Switch/Router", "category": "NetFlow", "mode": "Interface Config", "command": "ip flow monitor [name] input", "description": "Applies a flow monitor to capture ingress traffic", "example": "ip flow monitor MY-MONITOR input"}, {"device": "Switch (Nexus)", "category": "FEX", "mode": "Global Config", "command": "feature fex", "description": "Enables Fabric Extender support on the parent switch", "example": "feature fex"}, {"device": "Switch (Nexus)", "category": "FEX", "mode": "Global Config", "command": "fex [fex-id]", "description": "Creates and configures a Fabric Extender instance", "example": "fex 101"}, {"device": "Switch (Nexus)", "category": "FEX", "mode": "Interface Config", "command": "switchport mode fex-fabric", "description": "Sets the uplink port to connect to a FEX", "example": "switchport mode fex-fabric"}, {"device": "Switch (Nexus)", "category": "OTV", "mode": "Global Config", "command": "feature otv", "description": "Enables Overlay Transport Virtualization feature", "example": "feature otv"}, {"device": "Switch (Nexus)", "category": "OTV", "mode": "Global Config", "command": "interface overlay [number]", "description": "Creates a logical OTV overlay interface", "example": "interface overlay 1"}, {"device": "Switch (Nexus)", "category": "OTV", "mode": "Overlay Interface Config", "command": "otv join-interface [interface]", "description": "Sets the physical uplink used to reach the OTV core", "example": "otv join-interface Ethernet1/1"}, {"device": "Switch (Nexus)", "category": "OTV", "mode": "Overlay Interface Config", "command": "otv control-group [multicast-group]", "description": "Sets the multicast group for OTV control plane traffic", "example": "otv control-group 239.1.1.1"}, {"device": "Switch (Nexus)", "category": "QoS", "mode": "Global Config", "command": "policy-map type qos [name]", "description": "Creates an NX-OS QoS classification policy", "example": "policy-map type qos QOS-POLICY"}, {"device": "Switch (Nexus)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show system resources", "description": "Displays CPU and memory resource utilization on NX-OS", "example": "show system resources"}, {"device": "Switch (Nexus)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show module", "description": "Displays installed line cards and module status", "example": "show module"}, {"device": "WLC (9800/IOS-XE)", "category": "Basic Config", "mode": "Global Config", "command": "wireless profile policy [name]", "description": "Creates a wireless policy profile on a 9800 WLC", "example": "wireless profile policy DEFAULT-POLICY"}, {"device": "WLC (9800/IOS-XE)", "category": "Basic Config", "mode": "Global Config", "command": "wlan [profile-name] [wlan-id] [ssid]", "description": "Creates a WLAN entity on IOS-XE based WLCs", "example": "wlan Corp-WiFi 1 Corp-WiFi"}, {"device": "WLC (9800/IOS-XE)", "category": "Security", "mode": "WLAN Config", "command": "security wpa wpa2 ciphers aes", "description": "Configures WPA2-AES encryption for the WLAN", "example": "security wpa wpa2 ciphers aes"}, {"device": "WLC (9800/IOS-XE)", "category": "AP Management", "mode": "Global Config", "command": "ap profile [name]", "description": "Creates an AP join profile for onboarding access points", "example": "ap profile default-ap-profile"}, {"device": "WLC (9800/IOS-XE)", "category": "AP Management", "mode": "Global Config", "command": "wireless tag policy [name]", "description": "Creates a policy tag binding WLAN and policy profiles", "example": "wireless tag policy default-policy-tag"}, {"device": "WLC (9800/IOS-XE)", "category": "RF Profiles", "mode": "Global Config", "command": "ap dot11 5ghz rf-profile [name]", "description": "Creates a custom RF profile for the 5GHz radio band", "example": "ap dot11 5ghz rf-profile HIGH-DENSITY"}, {"device": "WLC (9800/IOS-XE)", "category": "Mobility", "mode": "Global Config", "command": "wireless mobility group member ip [ip-address]", "description": "Adds a peer controller to the mobility group", "example": "wireless mobility group member ip 10.1.1.5"}, {"device": "WLC (9800/IOS-XE)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show wireless summary", "description": "Displays a summary of WLANs APs and clients on IOS-XE WLC", "example": "show wireless summary"}, {"device": "WLC (9800/IOS-XE)", "category": "Troubleshooting", "mode": "Privileged EXEC", "command": "show ap summary", "description": "Displays a summary of joined access points", "example": "show ap summary"}, {"device": "WLC (AireOS)", "category": "Guest Access", "mode": "Privileged EXEC", "command": "config wlan security web-auth enable [wlan-id]", "description": "Enables web authentication (guest portal) on a WLAN", "example": "config wlan security web-auth enable 2"}, {"device": "WLC (AireOS)", "category": "Mobility", "mode": "Privileged EXEC", "command": "config mobility group member add [mac] [ip-address]", "description": "Adds a peer controller to the mobility group", "example": "config mobility group member add 00:11:22:33:44:55 10.1.1.5"}, {"device": "WLC (AireOS)", "category": "RF Management", "mode": "Privileged EXEC", "command": "config advanced 802.11a channel global auto", "description": "Enables dynamic channel assignment for the 5GHz band", "example": "config advanced 802.11a channel global auto"}, {"device": "Router", "category": "FHRP (VRRP)", "mode": "Interface Config", "command": "vrrp [group] ip [ip-address]", "description": "Configures a VRRP virtual IP address on the interface", "example": "vrrp 1 ip 192.168.1.254"}, {"device": "Router", "category": "FHRP (VRRP)", "mode": "Interface Config", "command": "vrrp [group] priority [value]", "description": "Sets VRRP election priority for the interface", "example": "vrrp 1 priority 110"}, {"device": "Router", "category": "FHRP (VRRP)", "mode": "Interface Config", "command": "vrrp [group] preempt", "description": "Allows a higher-priority router to reclaim master role", "example": "vrrp 1 preempt"}, {"device": "Router", "category": "FHRP (VRRP)", "mode": "Privileged EXEC", "command": "show vrrp brief", "description": "Displays VRRP group status summary", "example": "show vrrp brief"}, {"device": "Router", "category": "FHRP (GLBP)", "mode": "Interface Config", "command": "glbp [group] ip [ip-address]", "description": "Configures a GLBP virtual IP for load-balanced gateway redundancy", "example": "glbp 1 ip 192.168.1.254"}, {"device": "Router", "category": "FHRP (GLBP)", "mode": "Interface Config", "command": "glbp [group] priority [value]", "description": "Sets GLBP priority for AVG election", "example": "glbp 1 priority 110"}, {"device": "Router", "category": "FHRP (GLBP)", "mode": "Interface Config", "command": "glbp [group] load-balancing [method]", "description": "Sets the GLBP load-balancing algorithm", "example": "glbp 1 load-balancing host-dependent"}, {"device": "Router", "category": "FHRP (GLBP)", "mode": "Privileged EXEC", "command": "show glbp brief", "description": "Displays GLBP group and forwarder status", "example": "show glbp brief"}, {"device": "Router", "category": "IS-IS", "mode": "Global Config", "command": "router isis [tag]", "description": "Enables an IS-IS routing process", "example": "router isis CORE"}, {"device": "Router", "category": "IS-IS", "mode": "Router Config", "command": "net [nsap-address]", "description": "Sets the IS-IS NET address identifying the router", "example": "net 49.0001.1921.6800.1001.00"}, {"device": "Router", "category": "IS-IS", "mode": "Interface Config", "command": "ip router isis [tag]", "description": "Enables IS-IS on an interface", "example": "ip router isis CORE"}, {"device": "Router", "category": "IS-IS", "mode": "Interface Config", "command": "isis metric [value]", "description": "Sets the IS-IS metric for an interface", "example": "isis metric 20"}, {"device": "Router", "category": "IS-IS", "mode": "Privileged EXEC", "command": "show isis neighbors", "description": "Displays IS-IS adjacency status", "example": "show isis neighbors"}, {"device": "Router", "category": "MPLS", "mode": "Global Config", "command": "mpls ip", "description": "Enables MPLS forwarding globally", "example": "mpls ip"}, {"device": "Router", "category": "MPLS", "mode": "Interface Config", "command": "mpls ip", "description": "Enables MPLS on an interface", "example": "mpls ip"}, {"device": "Router", "category": "MPLS", "mode": "Global Config", "command": "mpls label protocol ldp", "description": "Sets LDP as the label distribution protocol", "example": "mpls label protocol ldp"}, {"device": "Router", "category": "MPLS", "mode": "Privileged EXEC", "command": "show mpls ldp neighbor", "description": "Displays LDP neighbor session status", "example": "show mpls ldp neighbor"}, {"device": "Router", "category": "MPLS", "mode": "Privileged EXEC", "command": "show mpls forwarding-table", "description": "Displays the MPLS label forwarding table", "example": "show mpls forwarding-table"}, {"device": "Router", "category": "MPLS L3VPN", "mode": "Global Config", "command": "ip vrf [name]", "description": "Creates a legacy VRF for MPLS L3VPN", "example": "ip vrf CUSTOMER_A"}, {"device": "Router", "category": "MPLS L3VPN", "mode": "VRF Config", "command": "rd [route-distinguisher]", "description": "Sets the route distinguisher for a VRF", "example": "rd 65000:100"}, {"device": "Router", "category": "MPLS L3VPN", "mode": "VRF Config", "command": "route-target export [rt]", "description": "Sets the export route target for VPN routes", "example": "route-target export 65000:100"}, {"device": "Router", "category": "MPLS L3VPN", "mode": "VRF Config", "command": "route-target import [rt]", "description": "Sets the import route target for VPN routes", "example": "route-target import 65000:100"}, {"device": "Router", "category": "BFD", "mode": "Interface Config", "command": "bfd interval [ms] min_rx [ms] multiplier [n]", "description": "Configures BFD timers on the interface", "example": "bfd interval 150 min_rx 150 multiplier 3"}, {"device": "Router", "category": "BFD", "mode": "Router Config", "command": "neighbor [ip] fall-over bfd", "description": "Ties a routing protocol neighbor to BFD for fast failure detection", "example": "neighbor 10.1.1.2 fall-over bfd"}, {"device": "Router", "category": "BFD", "mode": "Privileged EXEC", "command": "show bfd neighbors", "description": "Displays BFD session status with neighbors", "example": "show bfd neighbors"}, {"device": "Router", "category": "IP SLA", "mode": "Global Config", "command": "ip sla [operation-number]", "description": "Creates an IP SLA operation", "example": "ip sla 10"}, {"device": "Router", "category": "IP SLA", "mode": "IP SLA Config", "command": "icmp-echo [destination] source-interface [interface]", "description": "Configures an ICMP echo IP SLA probe", "example": "icmp-echo 8.8.8.8 source-interface GigabitEthernet0/0"}, {"device": "Router", "category": "IP SLA", "mode": "Global Config", "command": "ip sla schedule [operation-number] life forever start-time now", "description": "Schedules an IP SLA operation to start immediately", "example": "ip sla schedule 10 life forever start-time now"}, {"device": "Router", "category": "IP SLA", "mode": "Global Config", "command": "track [object-number] ip sla [operation-number] reachability", "description": "Ties a tracked object to an IP SLA probe result", "example": "track 1 ip sla 10 reachability"}, {"device": "Router", "category": "IP SLA", "mode": "Privileged EXEC", "command": "show ip sla statistics", "description": "Displays IP SLA probe results and statistics", "example": "show ip sla statistics"}, {"device": "Router", "category": "Route Policy", "mode": "Global Config", "command": "ip prefix-list [name] seq [n] permit [network/length]", "description": "Defines a prefix-list entry for route filtering", "example": "ip prefix-list PL-DEFAULT seq 10 permit 0.0.0.0/0"}, {"device": "Router", "category": "Route Policy", "mode": "Router Config", "command": "distribute-list prefix [name] in", "description": "Applies a prefix-list filter to inbound routing updates", "example": "distribute-list prefix PL-DEFAULT in"}, {"device": "Router", "category": "Route Policy", "mode": "Route-Map Config", "command": "set community [community] additive", "description": "Tags matched routes with a BGP community value", "example": "set community 65000:100 additive"}, {"device": "Router", "category": "Route Policy", "mode": "Route-Map Config", "command": "continue [sequence]", "description": "Jumps to another route-map sequence for further processing", "example": "continue 20"}, {"device": "Router", "category": "OSPF Advanced", "mode": "Router Config", "command": "area [area-id] stub", "description": "Configures an OSPF area as a stub area", "example": "area 1 stub"}, {"device": "Router", "category": "OSPF Advanced", "mode": "Router Config", "command": "area [area-id] nssa", "description": "Configures an OSPF area as a not-so-stubby area", "example": "area 1 nssa"}, {"device": "Router", "category": "OSPF Advanced", "mode": "Router Config", "command": "area [area-id] virtual-link [router-id]", "description": "Creates a virtual link across a transit area", "example": "area 0 virtual-link 10.1.1.1"}, {"device": "Router", "category": "OSPF Advanced", "mode": "Interface Config", "command": "ip ospf priority [value]", "description": "Sets OSPF DR/BDR election priority on an interface", "example": "ip ospf priority 200"}, {"device": "Router", "category": "BGP Advanced", "mode": "Router Config", "command": "neighbor [ip] route-reflector-client", "description": "Configures a neighbor as a BGP route-reflector client", "example": "neighbor 10.1.1.2 route-reflector-client"}, {"device": "Router", "category": "BGP Advanced", "mode": "Router Config", "command": "bgp confederation identifier [as-number]", "description": "Sets the BGP confederation identifier", "example": "bgp confederation identifier 65000"}, {"device": "Router", "category": "BGP Advanced", "mode": "Router Config", "command": "neighbor [ip] route-map [name] in", "description": "Applies a route-map to inbound BGP updates from a neighbor", "example": "neighbor 10.1.1.2 route-map FILTER-IN in"}, {"device": "Router", "category": "BGP Advanced", "mode": "Router Config", "command": "aggregate-address [network] [mask] summary-only", "description": "Summarizes a block of BGP routes into one advertisement", "example": "aggregate-address 10.0.0.0 255.0.0.0 summary-only"}, {"device": "Router", "category": "NTP & DNS", "mode": "Global Config", "command": "ntp authenticate", "description": "Enables NTP authentication globally", "example": "ntp authenticate"}, {"device": "Router", "category": "NTP & DNS", "mode": "Global Config", "command": "ntp authentication-key [key-id] md5 [key]", "description": "Defines an NTP authentication key", "example": "ntp authentication-key 1 md5 NtpKey123"}, {"device": "Router", "category": "NTP & DNS", "mode": "Global Config", "command": "ntp trusted-key [key-id]", "description": "Marks an NTP key as trusted for authentication", "example": "ntp trusted-key 1"}, {"device": "Router", "category": "NTP & DNS", "mode": "Global Config", "command": "ip domain-name [name]", "description": "Sets the device's DNS domain name", "example": "ip domain-name corp.local"}, {"device": "Router", "category": "NTP & DNS", "mode": "Global Config", "command": "ip name-server [ip-address]", "description": "Configures a DNS server for name resolution", "example": "ip name-server 8.8.8.8"}, {"device": "Router", "category": "IPv6 Security", "mode": "Interface Config", "command": "ipv6 nd raguard", "description": "Enables RA Guard to block rogue router advertisements", "example": "ipv6 nd raguard"}, {"device": "Router", "category": "IPv6 Security", "mode": "Interface Config", "command": "ipv6 dhcp guard", "description": "Blocks unauthorized DHCPv6 server messages on a port", "example": "ipv6 dhcp guard"}, {"device": "Router", "category": "IPv6 Security", "mode": "Global Config", "command": "ipv6 snooping policy [name]", "description": "Creates an IPv6 snooping policy for first-hop security", "example": "ipv6 snooping policy FHS-POLICY"}, {"device": "Switch", "category": "IPv6", "mode": "Interface Config", "command": "ipv6 dhcp relay destination [ip-address]", "description": "Forwards DHCPv6 client requests to a relay destination", "example": "ipv6 dhcp relay destination 2001:db8::1"}, {"device": "Switch/Router", "category": "Config Management", "mode": "Privileged EXEC", "command": "configure replace [path]", "description": "Replaces the running config with a saved configuration file", "example": "configure replace flash:backup.cfg"}, {"device": "Switch/Router", "category": "Automation (EEM)", "mode": "EEM Applet Config", "command": "event track [object-number] state [up|down]", "description": "Triggers an EEM applet when a tracked object changes state", "example": "event track 1 state down"}, {"device": "Switch", "category": "Loop & Link Protection", "mode": "Interface Config", "command": "udld port aggressive", "description": "Enables aggressive UDLD mode to detect unidirectional links", "example": "udld port aggressive"}, {"device": "Switch", "category": "Loop & Link Protection", "mode": "Global Config", "command": "udld enable", "description": "Enables UDLD globally on fiber interfaces", "example": "udld enable"}, {"device": "Switch", "category": "Loop & Link Protection", "mode": "Privileged EXEC", "command": "show udld neighbors", "description": "Displays UDLD neighbor status per interface", "example": "show udld neighbors"}, {"device": "Switch", "category": "Loop & Link Protection", "mode": "Global Config", "command": "errdisable recovery cause [reason]", "description": "Enables automatic recovery for a specific errdisable cause", "example": "errdisable recovery cause bpduguard"}, {"device": "Switch", "category": "Loop & Link Protection", "mode": "Global Config", "command": "errdisable recovery interval [seconds]", "description": "Sets the errdisable auto-recovery timer", "example": "errdisable recovery interval 300"}, {"device": "Switch", "category": "Loop & Link Protection", "mode": "Interface Config", "command": "storm-control broadcast level [percent]", "description": "Limits broadcast traffic to protect against storms", "example": "storm-control broadcast level 5.00"}, {"device": "Switch", "category": "Loop & Link Protection", "mode": "Interface Config", "command": "switchport backup interface [type][number]", "description": "Configures Flex Links for fast link-level backup", "example": "switchport backup interface Gi0/2"}, {"device": "Switch", "category": "High Availability (VSS)", "mode": "Global Config", "command": "switch virtual domain [domain-id]", "description": "Creates a Virtual Switching System domain", "example": "switch virtual domain 10"}, {"device": "Switch", "category": "High Availability (VSS)", "mode": "VSS Domain Config", "command": "switch [1|2] priority [value]", "description": "Sets VSS chassis priority for active supervisor election", "example": "switch 1 priority 110"}, {"device": "Switch", "category": "High Availability (VSS)", "mode": "Global Config", "command": "stackwise-virtual", "description": "Enables StackWise Virtual mode on supported Catalyst switches", "example": "stackwise-virtual"}, {"device": "Switch", "category": "High Availability (VSS)", "mode": "Interface Config", "command": "stackwise-virtual link [number]", "description": "Designates an interface as a StackWise Virtual Link", "example": "stackwise-virtual link 1"}, {"device": "Switch", "category": "Security", "mode": "Interface Config", "command": "switchport port-security aging time [minutes]", "description": "Sets how long learned secure MAC addresses are retained", "example": "switchport port-security aging time 60"}, {"device": "Switch/Router", "category": "ISE Integration", "mode": "Interface Config", "command": "authentication open", "description": "Allows traffic before 802.1X authentication completes (monitor mode)", "example": "authentication open"}, {"device": "Switch/Router", "category": "ISE Integration", "mode": "Interface Config", "command": "dot1x guest-vlan [vlan-id]", "description": "Places unauthenticated clients into a guest VLAN", "example": "dot1x guest-vlan 99"}, {"device": "Switch/Router", "category": "ISE Integration", "mode": "Interface Config", "command": "authentication event fail action next-method", "description": "Falls back to the next authentication method on failure", "example": "authentication event fail action next-method"}, {"device": "WLC (9800/IOS-XE)", "category": "802.11k/v/r", "mode": "WLAN Config", "command": "mobility fast-transition", "description": "Enables 802.11r fast transition roaming on a WLAN", "example": "mobility fast-transition"}, {"device": "WLC (9800/IOS-XE)", "category": "802.11k/v/r", "mode": "Global Config", "command": "wireless profile flex [name]", "description": "Creates a FlexConnect profile for branch AP deployments", "example": "wireless profile flex default-flex-profile"}, {"device": "WLC (9800/IOS-XE)", "category": "RRM", "mode": "Global Config", "command": "ap dot11 5ghz rrm channel dca", "description": "Enables dynamic channel assignment for the 5GHz radio", "example": "ap dot11 5ghz rrm channel dca"}, {"device": "WLC (9800/IOS-XE)", "category": "Client Management", "mode": "Privileged EXEC", "command": "wireless client mac-address [mac] exclude", "description": "Manually excludes a client from associating to the WLAN", "example": "wireless client mac-address 0011.2233.4455 exclude"}, {"device": "Firewall (ASA)", "category": "Object NAT", "mode": "Object Config", "command": "nat (inside,outside) static [ip-address]", "description": "Configures static one-to-one NAT for an object", "example": "nat (inside,outside) static 203.0.113.10"}, {"device": "Firewall (ASA)", "category": "Intrusion Detection", "mode": "Global Config", "command": "ip audit name [name] attack action alarm", "description": "Creates a legacy IP audit policy for attack signatures", "example": "ip audit name AUDIT1 attack action alarm"}, {"device": "Firewall (ASA)", "category": "Intrusion Detection", "mode": "Global Config", "command": "shun [ip-address]", "description": "Manually blocks all traffic from a source IP address", "example": "shun 203.0.113.99"}, {"device": "Firewall (FTD/FMC)", "category": "Correlation & Response", "mode": "FMC Web UI (Policy Editor)", "command": "Policies > Correlation", "description": "Defines correlation rules that trigger automated responses", "example": "Create rule alert on repeated failed logins"}, {"device": "Firewall (FTD/FMC)", "category": "Health Monitoring", "mode": "FMC Web UI", "command": "System > Health > Monitor", "description": "Displays health status and alerts for managed devices", "example": "Review CPU/memory health alerts"}, {"device": "ISE", "category": "Guest Access", "mode": "Web UI (Policy)", "command": "Guest Access > Configure > Guest Portals", "description": "Configures a self-service or sponsored guest portal", "example": "Create portal Employee-Sponsored-Guest"}, {"device": "ISE", "category": "Profiling", "mode": "Web UI (Policy)", "command": "Policy > Profiling", "description": "Defines endpoint profiling policies to classify device types", "example": "Create profile for IP-Phones"}, {"device": "ISE", "category": "BYOD", "mode": "Web UI (Policy)", "command": "Work Centers > BYOD", "description": "Configures onboarding flow for personal devices", "example": "Enable BYOD onboarding for Employee SSID"}, {"device": "ISE", "category": "Device Administration", "mode": "Web UI (Policy)", "command": "Work Centers > Device Administration", "description": "Configures TACACS+ policies for network device admin access", "example": "Create Device Admin Policy Set"}, {"device": "ISE", "category": "pxGrid", "mode": "Web UI (Administration)", "command": "Administration > pxGrid Services", "description": "Enables pxGrid for sharing session/context data with other platforms", "example": "Approve pxGrid client SIEM-Connector"}, {"device": "DNA Center", "category": "Software Image Management", "mode": "Web UI", "command": "Design > Image Repository", "description": "Manages golden software images for automated device upgrades", "example": "Mark 17.9.4 as Golden Image for Catalyst 9300"}, {"device": "DNA Center", "category": "Compliance", "mode": "Web UI", "command": "Provision > Compliance", "description": "Checks devices against configured compliance policies", "example": "Run compliance check on Access Switches"}, {"device": "DNA Center", "category": "API", "mode": "REST API (Postman/cURL)", "command": "POST /dna/intent/api/v1/template-programmer/template/deploy", "description": "Deploys a configuration template to one or more devices via API", "example": "curl -X POST https://dnac/dna/intent/api/v1/template-programmer/template/deploy"}, {"device": "Switch/Router", "category": "Licensing", "mode": "Privileged EXEC", "command": "show license status", "description": "Displays overall Smart Licensing enrollment and compliance status", "example": "show license status"}, {"device": "Switch/Router", "category": "High Availability", "mode": "Privileged EXEC", "command": "show redundancy", "description": "Displays supervisor redundancy state (active/standby, SSO/NSF)", "example": "show redundancy"}, {"device": "Switch/Router", "category": "High Availability", "mode": "Global Config", "command": "redundancy", "description": "Enters redundancy configuration mode for dual-supervisor systems", "example": "redundancy"}, {"device": "Switch/Router", "category": "High Availability", "mode": "Redundancy Config", "command": "mode sso", "description": "Sets stateful switchover as the redundancy mode", "example": "mode sso"}, {"device": "Switch (Nexus)", "category": "VPC Advanced", "mode": "VPC Domain Config", "command": "peer-gateway", "description": "Enables VPC peer-gateway for asymmetric routing support", "example": "peer-gateway"}, {"device": "Switch (Nexus)", "category": "VPC Advanced", "mode": "VPC Domain Config", "command": "auto-recovery", "description": "Allows a VPC peer to recover forwarding after a reload if its peer is unreachable", "example": "auto-recovery"}]
+</script>
+
+<script>
+(function(){
+  const RAW = JSON.parse(document.getElementById('data-source').textContent);
+
+  const DEVICE_COLORS = {
+    "Switch": "var(--tag-switch)",
+    "Switch (Nexus)": "var(--tag-nexus)",
+    "Router": "var(--tag-router)",
+    "Firewall (ASA/FTD)": "var(--tag-fw)",
+    "Firewall (ASA)": "var(--tag-fw)",
+    "Firewall (FTD/FMC)": "var(--tag-fw)",
+    "WLC": "var(--tag-wlc)",
+    "WLC (9800/IOS-XE)": "var(--tag-wlc)",
+    "WLC (AireOS)": "var(--tag-wlc)",
+    "ISE": "var(--tag-ise)",
+    "DNA Center": "var(--tag-dna)",
+    "Switch/Router": "var(--tag-sr)"
+  };
+
+  RAW.push(
+    {"device":"Router","category":"Advanced","mode":"Global Config","command":"router bgp [asn]","description":"Enters BGP configuration mode for advanced routing policies","example":"router bgp 65010"},
+    {"device":"Switch (Nexus)","category":"Advanced","mode":"Global Config","command":"feature nv overlay","description":"Enables VXLAN/EVPN overlay feature on Nexus platforms","example":"feature nv overlay"},
+    {"device":"Firewall (ASA/FTD)","category":"Troubleshooting","mode":"Privileged EXEC","command":"show conn detail","description":"Displays detailed connection table entries and state","example":"show conn detail"},
+    {"device":"Router","category":"Troubleshooting","mode":"Privileged EXEC","command":"show ip cef exact-route [src] [dst]","description":"Verifies forwarding path using CEF for a specific flow","example":"show ip cef exact-route 10.1.1.10 8.8.8.8"},
+    {"device":"WLC (9800/IOS-XE)","category":"Troubleshooting","mode":"Privileged EXEC","command":"show wireless client summary","description":"Shows connected wireless clients and session state","example":"show wireless client summary"}
+  );
+
+  const deviceOrder = ["Switch","Router","Firewall (ASA/FTD)","Firewall (ASA)","Firewall (FTD/FMC)","WLC","WLC (9800/IOS-XE)","WLC (AireOS)","Switch (Nexus)","ISE","DNA Center","Switch/Router"];
+  const devices = deviceOrder.filter(d => RAW.some(r => r.device === d));
+  const categories = [...new Set(RAW.map(r => r.category))].sort();
+
+  const state = {
+    query: "",
+    device: "",
+    category: "",
+    sortKey: null,
+    sortDir: 1
+  };
+
+  const tbody = document.getElementById('tbody');
+  const emptyState = document.getElementById('emptyState');
+  const resultCount = document.getElementById('resultCount');
+  const totalCount = document.getElementById('totalCount');
+  const footerCount = document.getElementById('footerCount');
+  const creditYear = document.getElementById('creditYear');
+  const searchInput = document.getElementById('search');
+  const clearBtn = document.getElementById('clearSearch');
+  const deviceFiltersEl = document.getElementById('deviceFilters');
+  const categorySelect = document.getElementById('categoryFilter');
+  const resetBtn = document.getElementById('resetAll');
+
+  totalCount.textContent = RAW.length;
+  footerCount.textContent = RAW.length + ' commands across ' + devices.length + ' platform types · click any command to copy';
+  creditYear.textContent = new Date().getFullYear();
+
+  // Build device chips
+  devices.forEach(d => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.dataset.device = d;
+    const color = DEVICE_COLORS[d] || 'var(--text-dim)';
+    chip.innerHTML = '<span class="dot" style="background:' + color + '"></span>' + d;
+    chip.addEventListener('click', () => {
+      state.device = (state.device === d) ? "" : d;
+      render();
+    });
+    deviceFiltersEl.insertBefore(chip, deviceFiltersEl.children[1] ? document.querySelector('.flabel:nth-of-type(2)') : null);
+  });
+  // simpler: append all chips right after first label
+  (function fixOrder(){
+    const label2 = deviceFiltersEl.querySelectorAll('.flabel')[1];
+    const chips = deviceFiltersEl.querySelectorAll('.chip');
+    chips.forEach(c => deviceFiltersEl.insertBefore(c, label2));
+  })();
+
+  // Build category dropdown
+  categories.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    categorySelect.appendChild(opt);
+  });
+
+  categorySelect.addEventListener('change', () => {
+    state.category = categorySelect.value;
+    render();
+  });
+
+  function escapeHtml(str){
+    return str.replace(/[&<>"']/g, s => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[s]));
+  }
+
+  function highlight(text, q){
+    const safe = escapeHtml(text);
+    if(!q) return safe;
+    try {
+      const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig');
+      return safe.replace(re, '<mark>$1</mark>');
+    } catch(e){ return safe; }
+  }
+
+  function matches(row, q){
+    if(!q) return true;
+    const hay = (row.device + ' ' + row.category + ' ' + row.mode + ' ' + row.command + ' ' + row.description + ' ' + row.example).toLowerCase();
+    return q.toLowerCase().split(/\s+/).filter(Boolean).every(term => hay.includes(term));
+  }
+
+  function render(){
+    // update chip active states
+    deviceFiltersEl.querySelectorAll('.chip').forEach(chip => {
+      chip.classList.toggle('active', chip.dataset.device === state.device);
+    });
+    categorySelect.value = state.category;
+    clearBtn.style.display = state.query ? 'block' : 'none';
+
+    let rows = RAW.filter(r => {
+      if(state.device && r.device !== state.device) return false;
+      if(state.category && r.category !== state.category) return false;
+      if(!matches(r, state.query)) return false;
+      return true;
+    });
+
+    if(state.sortKey){
+      rows = rows.slice().sort((a,b) => {
+        const av = a[state.sortKey].toLowerCase();
+        const bv = b[state.sortKey].toLowerCase();
+        if(av < bv) return -1 * state.sortDir;
+        if(av > bv) return 1 * state.sortDir;
+        return 0;
+      });
+    }
+
+    resultCount.textContent = rows.length;
+
+    if(rows.length === 0){
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    const q = state.query;
+    tbody.innerHTML = rows.map(r => {
+      const color = DEVICE_COLORS[r.device] || 'var(--text-dim)';
+      return '<tr>' +
+        '<td class="col-device"><span class="tag" style="color:' + color + '"><span class="dot" style="background:' + color + '"></span>' + highlight(r.device, q) + '</span></td>' +
+        '<td class="col-category">' + highlight(r.category, q) + '</td>' +
+        '<td class="col-mode">' + highlight(r.mode, q) + '</td>' +
+        '<td class="col-command"><div class="cmd-row"><span>' + highlight(r.command, q) + '</span><button class="copy-btn" data-cmd="' + escapeHtml(r.command) + '">copy</button></div></td>' +
+        '<td class="col-description">' + highlight(r.description, q) + '</td>' +
+        '<td class="col-example">' + highlight(r.example, q) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  // Search input
+  let debounceTimer;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      state.query = searchInput.value.trim();
+      render();
+    }, 60);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    state.query = '';
+    searchInput.focus();
+    render();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    state.query = '';
+    state.device = '';
+    state.category = '';
+    state.sortKey = null;
+    state.sortDir = 1;
+    searchInput.value = '';
+    categorySelect.value = '';
+    document.querySelectorAll('thead th').forEach(th => th.classList.remove('sorted'));
+    render();
+  });
+
+  // Sorting
+  document.querySelectorAll('thead th').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      if(state.sortKey === key){
+        state.sortDir *= -1;
+      } else {
+        state.sortKey = key;
+        state.sortDir = 1;
+      }
+      document.querySelectorAll('thead th').forEach(t => t.classList.remove('sorted'));
+      th.classList.add('sorted');
+      th.querySelector('.arrow').textContent = state.sortDir === 1 ? '▾' : '▴';
+      render();
+    });
+  });
+
+  // Copy to clipboard (event delegation)
+  tbody.addEventListener('click', (e) => {
+    const btn = e.target.closest('.copy-btn');
+    if(!btn) return;
+    const cmd = btn.dataset.cmd;
+    navigator.clipboard.writeText(cmd).then(() => {
+      const original = btn.textContent;
+      btn.textContent = 'copied ✓';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('copied');
+      }, 1200);
+    }).catch(() => {
+      btn.textContent = 'error';
+    });
+  });
+
+  // Keyboard shortcut: "/" focuses search
+  document.addEventListener('keydown', (e) => {
+    if(e.key === '/' && document.activeElement !== searchInput){
+      e.preventDefault();
+      searchInput.focus();
+    }
+    if(e.key === 'Escape' && document.activeElement === searchInput){
+      searchInput.value = '';
+      state.query = '';
+      render();
+    }
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
