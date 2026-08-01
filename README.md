@@ -42,6 +42,7 @@ A visual overview of the project structure and purpose is included in the reposi
 
 - Linux
 - AWS
+- Google Cloud Platform (GCP)
 - GitHub
 
 ### Utilities
@@ -57,6 +58,7 @@ A visual overview of the project structure and purpose is included in the reposi
 - Responsive layout for desktop and mobile use
 - Zero dependency installation or build process
 - Easy deployment to static hosting platforms
+- Dedicated GCP reference with common networking and troubleshooting commands
 
 ## Project Structure
 
@@ -71,6 +73,7 @@ A visual overview of the project structure and purpose is included in the reposi
 ├── cisco-cli-reference.html
 ├── f5-cli-reference.html
 ├── fortigate-cli-reference.html
+├── gcp-cli-reference.html
 ├── github-cli-reference.html
 ├── juniper-cli-reference.html
 ├── linux-cli-reference.html
