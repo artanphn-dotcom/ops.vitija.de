@@ -16,13 +16,10 @@
 
 ## 🗺️ Visual Study Guide
 
-Get a visual overview of the **ops.vitija.de** portal, including its architecture, supported platforms, key features, development workflow, deployment options, and intended audience.
 
 <p align="center">
   <img src="studyguide.png" alt="ops.vitija.de Visual Study Guide" width="1200">
 </p>
-
-> 💡 **Tip:** Keep `studyguide.png` in the same directory as this `README.md` so the image renders correctly on GitHub and other Markdown viewers.
 
 ## 🚀 Overview
 
