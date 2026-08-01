@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google Cloud CLI Reference</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1420;
+    --panel:#111e2c;
+    --panel-raised:#16283a;
+    --line:#1f3348;
+    --line-soft:#182a3c;
+    --text:#dbe7f0;
+    --text-dim:#7f97ab;
+    --text-faint:#52697c;
+    --accent:#4fd1c5;
+    --accent-soft:rgba(79,209,197,0.12);
+    --accent-strong:#6ee7db;
+    --amber:#f0b45c;
+    --tag-cyan:#6ee7db;
+    --tag-blue:#6ea8fe;
+    --tag-violet:#b48cff;
+    --mono:'JetBrains Mono', "SF Mono", "Fira Code", Consolas, Menlo, Monaco, monospace;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, .chip:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(79,209,197,0.06), transparent 45%),
+      radial-gradient(circle at 85% 10%, rgba(180,140,255,0.05), transparent 40%);
+    min-height: 100vh;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(11,20,32,0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    padding: 18px 28px 16px;
+  }
+
+  .topbar-inner {
+    max-width: 1700px;
+    margin: 0 auto;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .brand .prompt {
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 15px;
+  }
+
+  .brand h1 {
+    font-size: 18px;
+    font-weight: 650;
+    letter-spacing: 0.2px;
+    margin: 0;
+    color: var(--text);
+  }
+
+  .brand .sub {
+    font-size: 12.5px;
+    color: var(--text-faint);
+    margin-left: 4px;
+  }
+
+  .count-pill {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    padding: 5px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .count-pill b { color: var(--accent-strong); font-weight: 700; }
+
+  .menu-btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent-strong);
+    text-decoration: none;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 8px;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+  .menu-btn:hover { border-color: var(--accent); }
+
+  .search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .search-box {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-box .glyph {
+    position: absolute;
+    left: 14px;
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  #search {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14.5px;
+    padding: 12px 40px 12px 34px;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+
+  #search::placeholder { color: var(--text-faint); }
+  #search:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .clear-btn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-faint);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 6px;
+    line-height: 1;
+    display: none;
+  }
+  .clear-btn:hover { color: var(--text); }
+
+  .reset-btn {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0 16px;
+    cursor: pointer;
+    transition: all .15s ease;
+    white-space: nowrap;
+  }
+  .reset-btn:hover { border-color: var(--accent); color: var(--accent-strong); }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    align-items: center;
+  }
+
+  .filters .flabel {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    margin-right: 4px;
+    font-weight: 600;
+  }
+
+  .chip {
+    font-family: var(--sans);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: all .12s ease;
+    white-space: nowrap;
+  }
+
+  .chip:hover {
+    color: var(--text);
+    border-color: var(--text-faint);
+  }
+
+  .chip.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent-strong);
+  }
+
+  main {
+    max-width: 1700px;
+    margin: 0 auto;
+    padding: 22px 28px 60px;
+  }
+
+  .table-wrap {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: auto;
+    background: var(--panel);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 13.5px;
+  }
+
+  thead th {
+    background: #0e1926;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-faint);
+    font-weight: 700;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  thead th[data-key="service"]{ width: 11%; }
+  thead th[data-key="category"]{ width: 10%; }
+  thead th[data-key="mode"]{ width: 9%; }
+  thead th[data-key="command"]{ width: 20%; }
+  thead th[data-key="description"]{ width: 31%; }
+  thead th[data-key="example"]{ width: 19%; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--line-soft);
+    transition: background .1s ease;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--panel-raised); }
+
+  td {
+    padding: 12px 16px;
+    vertical-align: top;
+    color: var(--text);
+  }
+
+  td.col-service { white-space: nowrap; }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 3px 9px 3px 7px;
+    border-radius: 6px;
+    white-space: nowrap;
+    background: rgba(255,255,255,0.04);
+  }
+  .tag .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink:0; }
+
+  td.col-category {
+    color: var(--text-dim);
+    white-space: nowrap;
+    font-size: 12.5px;
+  }
+
+  td.col-mode {
+    color: var(--text-faint);
+    white-space: nowrap;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+
+  td.col-command {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent-strong);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--text-faint);
+    font-family: var(--sans);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 5px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .12s ease, color .12s ease, border-color .12s ease;
+    white-space: nowrap;
+    margin-top: 6px;
+  }
+
+  tr:hover .copy-btn { opacity: 1; }
+  .copy-btn:hover { color: var(--accent-strong); border-color: var(--line); }
+  .copy-btn.copied { opacity: 1; color: var(--amber); border-color: var(--amber); }
+
+  td.col-description {
+    color: #e7f0fc;
+    line-height: 1.45;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  td.col-example {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: #c8d8ea;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 70px 20px;
+    color: var(--text-faint);
+  }
+  .empty-state .glyph {
+    font-family: var(--mono);
+    font-size: 28px;
+    color: var(--text-faint);
+    margin-bottom: 10px;
+  }
+  .empty-state .msg { font-size: 14px; }
+  .empty-state .hint { font-size: 12.5px; margin-top: 6px; color: var(--text-faint); }
+
+  footer {
+    max-width: 1700px;
+    margin: 0 auto;
+    padding: 0 28px 40px;
+    color: var(--text-faint);
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 900px) {
+    .topbar { padding: 14px 16px 14px; }
+    main { padding: 16px 16px 50px; }
+    footer { padding: 0 16px 30px; }
+    .table-wrap { overflow: visible; border-radius: 10px; }
+  }
+
+  @media (max-width: 700px) {
+    .search-row { flex-direction: column; }
+    .reset-btn { width: 100%; padding: 10px 14px; }
+    thead { display: none; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    tr { padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+    td { padding: 4px 0; }
+    td.col-command { padding-top: 8px; }
+    td.col-example { padding-top: 8px; }
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand-row">
+        <div class="brand">
+          <span class="prompt">$</span>
+          <h1>Google Cloud CLI Reference</h1>
+          <span class="sub">searchable reference for everyday GCP operations</span>
+        </div>
+        <div class="count-pill" id="count">0 items</div>
+      </div>
+      <div class="search-row">
+        <div class="search-box">
+          <span class="glyph">⌕</span>
+          <input id="search" type="text" placeholder="Search commands, services, or keywords..." />
+          <button class="clear-btn" id="clearBtn" type="button" aria-label="Clear search">×</button>
+        </div>
+        <a class="menu-btn" href="index.html">← Back to menu</a>
+      </div>
+      <div class="filters" id="filters"></div>
+    </div>
+  </div>
+
+  <main>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-key="service">Service</th>
+            <th data-key="category">Category</th>
+            <th data-key="mode">Mode</th>
+            <th data-key="command">Command</th>
+            <th data-key="description">Description</th>
+            <th data-key="example">Example</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>
+    <span>Static reference · client-side search</span>
+    <span>Tip: click any command to copy it</span>
+  </footer>
+
+  <script>
+    const entries = [
+      { service: 'gcloud', category: 'auth', mode: 'gcloud', command: 'gcloud auth login', description: 'Authenticate the Google Cloud CLI with your user account.', example: 'gcloud auth login --no-launch-browser' },
+      { service: 'gcloud', category: 'auth', mode: 'gcloud', command: 'gcloud auth list', description: 'List configured accounts and their active status.', example: 'gcloud auth list' },
+      { service: 'gcloud', category: 'project', mode: 'gcloud', command: 'gcloud config set project PROJECT_ID', description: 'Set the active project for subsequent CLI commands.', example: 'gcloud config set project my-project-123' },
+      { service: 'gcloud', category: 'project', mode: 'gcloud', command: 'gcloud projects list', description: 'Display the projects available to the current account.', example: 'gcloud projects list' },
+      { service: 'gcloud', category: 'compute', mode: 'gcloud', command: 'gcloud compute instances list', description: 'List Compute Engine instances in the active project.', example: 'gcloud compute instances list --filter="status=RUNNING"' },
+      { service: 'gcloud', category: 'compute', mode: 'gcloud', command: 'gcloud compute ssh INSTANCE_NAME', description: 'Connect to a Compute Engine instance over SSH.', example: 'gcloud compute ssh app-vm --zone=europe-west1-b' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute networks list', description: 'List VPC networks defined in the project.', example: 'gcloud compute networks list' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute networks subnets list', description: 'List subnetworks inside the selected VPC network.', example: 'gcloud compute networks subnets list --network=vpc-prod' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute firewall-rules list', description: 'Show firewall rules applied to the project.', example: 'gcloud compute firewall-rules list' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute forwarding-rules list', description: 'List forwarding rules for load balancers and networking services.', example: 'gcloud compute forwarding-rules list' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute addresses list', description: 'List static IP addresses and reserved address ranges.', example: 'gcloud compute addresses list' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute routers list', description: 'List Cloud Routers for VPN and interconnect connectivity.', example: 'gcloud compute routers list' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute vpn-tunnels list', description: 'Display VPN tunnels configured for hybrid connectivity.', example: 'gcloud compute vpn-tunnels list' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute ssl-certificates list', description: 'List SSL certificates used by load balancers and HTTPS services.', example: 'gcloud compute ssl-certificates list' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute routes list', description: 'Inspect route entries in the VPC to validate path selection and reachability.', example: 'gcloud compute routes list' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute instances list --filter="status!=TERMINATED"', description: 'Verify that instances are present and healthy when investigating connectivity issues.', example: 'gcloud compute instances list --filter="status!=TERMINATED"' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute firewall-rules describe FIREWALL_NAME', description: 'Inspect firewall rule details to confirm allow/deny behavior during troubleshooting.', example: 'gcloud compute firewall-rules describe allow-ssh' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute packets-mirrorings list', description: 'Check packet mirroring configurations when debugging traffic visibility or inspection paths.', example: 'gcloud compute packets-mirrorings list' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud compute operations list', description: 'Review recent compute operations for failed changes or network provisioning errors.', example: 'gcloud compute operations list --limit=20' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud dns managed-zones list', description: 'Check DNS zone configuration when DNS resolution or name-based routing is failing.', example: 'gcloud dns managed-zones list' },
+      { service: 'gcloud', category: 'network', mode: 'gcloud', command: 'gcloud dns record-sets list ZONE_NAME', description: 'Inspect DNS record sets for service discovery and hostname resolution issues.', example: 'gcloud dns record-sets list example-zone' },
+      { service: 'gcloud', category: 'storage', mode: 'gcloud', command: 'gcloud storage buckets list', description: 'List Cloud Storage buckets in the active project.', example: 'gcloud storage buckets list' },
+      { service: 'gcloud', category: 'storage', mode: 'gsutil', command: 'gsutil cp local-file gs://bucket/path', description: 'Upload a file to a Cloud Storage bucket.', example: 'gsutil cp report.txt gs://my-bucket/reports/' },
+      { service: 'gcloud', category: 'storage', mode: 'gsutil', command: 'gsutil ls gs://bucket/path', description: 'List objects in a Cloud Storage bucket.', example: 'gsutil ls gs://my-bucket/logs/' },
+      { service: 'gcloud', category: 'iam', mode: 'gcloud', command: 'gcloud iam service-accounts list', description: 'List service accounts available in the active project.', example: 'gcloud iam service-accounts list' },
+      { service: 'gcloud', category: 'iam', mode: 'gcloud', command: 'gcloud projects add-iam-policy-binding PROJECT_ID', description: 'Grant a role to a user or service account at the project level.', example: 'gcloud projects add-iam-policy-binding my-project-123 --member=user:alice@example.com --role=roles/viewer' },
+      { service: 'gcloud', category: 'data', mode: 'bq', command: 'bq ls', description: 'List BigQuery datasets in the active project.', example: 'bq ls' },
+      { service: 'gcloud', category: 'data', mode: 'bq', command: 'bq query "SELECT * FROM dataset.table LIMIT 10"', description: 'Run a BigQuery SQL query from the shell.', example: 'bq query --use_legacy_sql=false "SELECT * FROM sales.orders LIMIT 10"' },
+      { service: 'gcloud', category: 'container', mode: 'gcloud', command: 'gcloud container clusters list', description: 'List GKE clusters in the active project.', example: 'gcloud container clusters list' },
+      { service: 'gcloud', category: 'container', mode: 'gcloud', command: 'gcloud container clusters get-credentials CLUSTER_NAME', description: 'Download credentials for a GKE cluster to your local kubeconfig.', example: 'gcloud container clusters get-credentials primary --zone=europe-west1-b' },
+      { service: 'gcloud', category: 'functions', mode: 'gcloud', command: 'gcloud functions deploy FUNCTION_NAME', description: 'Deploy a Cloud Function from local source.', example: 'gcloud functions deploy hello --runtime=python311 --trigger-http' }
+    ];
+
+    const filters = ['all','auth','project','compute','network','storage','iam','data','container','functions'];
+    const filterLabels = { all: 'All', auth: 'Auth', project: 'Projects', compute: 'Compute', network: 'Network', storage: 'Storage', iam: 'IAM', data: 'Data', container: 'Containers', functions: 'Functions' };
+
+    const rows = document.getElementById('rows');
+    const searchInput = document.getElementById('search');
+    const clearBtn = document.getElementById('clearBtn');
+    const countEl = document.getElementById('count');
+    const filtersEl = document.getElementById('filters');
+    const toast = document.createElement('div');
+    toast.className = 'copy-toast';
+    document.body.appendChild(toast);
+
+    let activeFilter = 'all';
+
+    function buildFilters() {
+      filtersEl.innerHTML = '<span class="flabel">Filter</span>' + filters.map(filter => `<button class="chip ${filter === activeFilter ? 'active' : ''}" data-filter="${filter}">${filterLabels[filter]}</button>`).join('');
+      filtersEl.querySelectorAll('.chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeFilter = btn.getAttribute('data-filter');
+          buildFilters();
+          render();
+        });
+      });
+    }
+
+    function render() {
+      const query = searchInput.value.toLowerCase();
+      const visible = entries.filter(item => {
+        const matchesFilter = activeFilter === 'all' || item.category === activeFilter;
+        const haystack = `${item.service} ${item.category} ${item.mode} ${item.command} ${item.description} ${item.example}`.toLowerCase();
+        const matchesQuery = !query || haystack.includes(query);
+        return matchesFilter && matchesQuery;
+      });
+
+      countEl.innerHTML = `<b>${visible.length}</b> item${visible.length === 1 ? '' : 's'}`;
+
+      if (!visible.length) {
+        rows.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="glyph">⌘</div><div class="msg">No matching commands found.</div><div class="hint">Try another keyword or category.</div></div></td></tr>`;
+        return;
+      }
+
+      rows.innerHTML = visible.map(item => `
+        <tr>
+          <td class="col-service">
+            <span class="tag" style="color:${item.service === 'gcloud' ? 'var(--tag-cyan)' : item.service === 'gsutil' ? 'var(--tag-blue)' : 'var(--tag-violet)'}">
+              <span class="dot" style="background:${item.service === 'gcloud' ? 'var(--tag-cyan)' : item.service === 'gsutil' ? 'var(--tag-blue)' : 'var(--tag-violet)'}"></span>${item.service}
+            </span>
+          </td>
+          <td class="col-category">${item.category}</td>
+          <td class="col-mode">${item.mode}</td>
+          <td class="col-command">${item.command}<br><button class="copy-btn" data-copy="${item.command}" type="button">Copy</button></td>
+          <td class="col-description">${item.description}</td>
+          <td class="col-example">${item.example}</td>
+        </tr>
+      `).join('');
+
+      rows.querySelectorAll('.copy-btn').forEach(button => {
+        button.addEventListener('click', async () => {
+          const command = button.getAttribute('data-copy');
+          try {
+            await navigator.clipboard.writeText(command);
+            button.textContent = 'Copied';
+            button.classList.add('copied');
+            setTimeout(() => {
+              button.textContent = 'Copy';
+              button.classList.remove('copied');
+            }, 1200);
+          } catch (err) {
+            button.textContent = 'Failed';
+            button.classList.add('copied');
+            setTimeout(() => {
+              button.textContent = 'Copy';
+              button.classList.remove('copied');
+            }, 1200);
+          }
+        });
+      });
+    }
+
+    searchInput.addEventListener('input', () => {
+      const hasValue = searchInput.value.trim().length > 0;
+      clearBtn.style.display = hasValue ? 'block' : 'none';
+      render();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      clearBtn.style.display = 'none';
+      render();
+      searchInput.focus();
+    });
+
+    buildFilters();
+    render();
+  </script>
+</body>
+</html>
